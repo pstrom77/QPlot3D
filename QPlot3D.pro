@@ -1,6 +1,6 @@
 QT += core gui opengl
 
-TARGET = 3DPlot-example
+TARGET = QPlot3D-example
 TEMPLATE = app
 
 SOURCES += main.cpp QPlot3D.cpp
