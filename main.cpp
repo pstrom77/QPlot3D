@@ -1,3 +1,23 @@
+/**********************************************************************
+ **
+** Copyright (C) 2013 Peter Strömbäck <peter.stromback@yahoo.se>
+**
+** Contact: http://www.qt-project.org/legal			       
+** This program is free software: you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation, either version 3 of the License, or
+** (at your option) any later version.
+** 
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program.  If not, see <http://www.gnu.org/licenses/>.
+**
+**********************************************************************/
+
 #include <QtCore>
 #include "QPlot3D.h"
 
@@ -53,13 +73,14 @@ public:
 
   ~Box() { delete mCurve; }
 
-  QCurve3D* getCurve() const { return mCurve; }
+  QCurve3D* curve() const { return mCurve; }
 private:
   QCurve3D* mCurve;
 };
 
 
 int main(int argc, char* argv[]) {
+
   QApplication app(argc,argv);
 
   //////////////////////////////////////////////////////////////////////  
@@ -69,13 +90,13 @@ int main(int argc, char* argv[]) {
   Box box2("Box 2", QVector3D(-5,0,0), Qt::green);
   Box box3("Box 3", QVector3D(0,0,5), Qt::blue);
   Box fatBox("Fat Box", QVector3D(0,5,-5), Qt::black);
-  fatBox.getCurve()->setLineWidth(5);
+  fatBox.curve()->setLineWidth(5);
 
   QPlot3D plot;
-  plot.addCurve(box1.getCurve());
-  plot.addCurve(box2.getCurve());
-  plot.addCurve(box3.getCurve());
-  plot.addCurve(fatBox.getCurve());
+  plot.addCurve(box1.curve());
+  plot.addCurve(box2.curve());
+  plot.addCurve(box3.curve());
+  plot.addCurve(fatBox.curve());
 
   QCurve3D spiral("Spiral");
   // Add data to spiral curve
@@ -111,9 +132,9 @@ int main(int argc, char* argv[]) {
   plot2.addCurve(&bigSpiral);
 
   // Change labels on axes from the default x,y,z
-  plot2.getXAxis().setLabel("North");
-  plot2.getYAxis().setLabel("East");
-  plot2.getZAxis().setLabel("Down");
+  plot2.xAxis().setLabel("North");
+  plot2.yAxis().setLabel("East");
+  plot2.zAxis().setLabel("Down");
 
   // Window logistics...
   plot2.resize(300,300);
@@ -143,38 +164,38 @@ int main(int argc, char* argv[]) {
   tPlot4.addCurve(&bigSpiral);
 
   // Change settings
-  tPlot1.setBackground(Qt::black);
-  tPlot1.getXAxis().setLabelColor(Qt::white);
-  tPlot1.getYAxis().setLabelColor(Qt::white);
-  tPlot1.getZAxis().setLabelColor(Qt::white);
-  tPlot1.getXAxis().setPlaneColor(Qt::gray);
-  tPlot1.getYAxis().setPlaneColor(Qt::gray);
-  tPlot1.getZAxis().setPlaneColor(Qt::gray);
+  tPlot1.setBackgroundColor(Qt::black);
+  tPlot1.xAxis().setLabelColor(Qt::white);
+  tPlot1.yAxis().setLabelColor(Qt::white);
+  tPlot1.zAxis().setLabelColor(Qt::white);
+  tPlot1.xAxis().setPlaneColor(Qt::gray);
+  tPlot1.yAxis().setPlaneColor(Qt::gray);
+  tPlot1.zAxis().setPlaneColor(Qt::gray);
   tPlot1.setShowLegend(false);
   tPlot1.setShowAzimuthElevation(false);
 
-  tPlot2.getXAxis().setShowPlane(false);
-  tPlot2.getYAxis().setShowPlane(false);
-  tPlot2.getZAxis().setShowPlane(false);
-  tPlot2.setBackground(Qt::gray);
-  tPlot2.getXAxis().setGridColor(Qt::yellow);
-  tPlot2.getYAxis().setGridColor(Qt::yellow);
-  tPlot2.getZAxis().setGridColor(Qt::yellow);
+  tPlot2.xAxis().setShowPlane(false);
+  tPlot2.yAxis().setShowPlane(false);
+  tPlot2.zAxis().setShowPlane(false);
+  tPlot2.setBackgroundColor(Qt::gray);
+  tPlot2.xAxis().setGridColor(Qt::yellow);
+  tPlot2.yAxis().setGridColor(Qt::yellow);
+  tPlot2.zAxis().setGridColor(Qt::yellow);
 
-  tPlot3.getXAxis().setLabel("Forward");
-  tPlot3.getYAxis().setLabel("Right");
-  tPlot3.getZAxis().setLabel("Down");
+  tPlot3.xAxis().setLabel("Forward");
+  tPlot3.yAxis().setLabel("Right");
+  tPlot3.zAxis().setLabel("Down");
   tPlot3.hideAxes();
 
-  tPlot4.getXAxis().setShowPlane(false);
-  tPlot4.getYAxis().setShowPlane(false);
-  tPlot4.getZAxis().setShowPlane(false);
-  tPlot4.getXAxis().setShowGrid(false);
-  tPlot4.getYAxis().setShowGrid(false);
-  tPlot4.getZAxis().setShowGrid(false);
-  tPlot4.getXAxis().setAxisColor(Qt::red);
-  tPlot4.getYAxis().setAxisColor(Qt::green);
-  tPlot4.getZAxis().setAxisColor(Qt::blue);
+  tPlot4.xAxis().setShowPlane(false);
+  tPlot4.yAxis().setShowPlane(false);
+  tPlot4.zAxis().setShowPlane(false);
+  tPlot4.xAxis().setShowGrid(false);
+  tPlot4.yAxis().setShowGrid(false);
+  tPlot4.zAxis().setShowGrid(false);
+  tPlot4.xAxis().setAxisColor(Qt::red);
+  tPlot4.yAxis().setAxisColor(Qt::green);
+  tPlot4.zAxis().setAxisColor(Qt::blue);
   tPlot4.setAzimuth(90);
   tPlot4.setElevation(-90);
   

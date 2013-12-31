@@ -1,8 +1,95 @@
+/**********************************************************************
+** Copyright (C) 2013 Peter Strömbäck <peter.stromback@yahoo.se>
+**
+** Contact: http://www.qt-project.org/legal			       
+** This program is free software: you can redistribute it and/or modify
+** it under the terms of the GNU General Public License as published by
+** the Free Software Foundation, either version 3 of the License, or
+** (at your option) any later version.
+** 
+** This program is distributed in the hope that it will be useful,
+** but WITHOUT ANY WARRANTY; without even the implied warranty of
+** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+** GNU General Public License for more details.
+**
+** You should have received a copy of the GNU General Public License
+** along with this program.  If not, see <http://www.gnu.org/licenses/>.
+**
+**********************************************************************/
+
 #include "QPlot3D.h"
 #include <limits>
-#include <iostream>
-#include <fstream>
-#include "OpenGL/glu.h"
+
+static void Draw3DPlane(QVector3D topLeft, QVector3D bottomRight, QColor color) {
+    glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+    glBegin(GL_QUADS);
+    glVertex3f(topLeft.x(),    topLeft.y(),    topLeft.z());
+    glVertex3f(bottomRight.x(),topLeft.y(),    bottomRight.z());
+    glVertex3f(bottomRight.x(),bottomRight.y(),bottomRight.z());
+    glVertex3f(topLeft.x(),    bottomRight.y(),topLeft.z());
+    glEnd();
+}
+
+static void Draw2DPlane(QVector2D topLeft, QVector2D bottomRight, QColor color) {
+    glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+    glBegin(GL_QUADS);
+    glVertex2f(topLeft.x(),    topLeft.y());
+    glVertex2f(bottomRight.x(),topLeft.y());
+    glVertex2f(bottomRight.x(),bottomRight.y());
+    glVertex2f(topLeft.x(),    bottomRight.y());
+    glEnd();
+}
+
+static void Draw3DLine(QVector3D from, QVector3D to, int lineWidth, QColor color) {
+  glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+  glLineWidth(lineWidth);
+  glBegin(GL_LINES);
+  glVertex3f(from.x(),from.y(),from.z());
+  glVertex3f(to.x(),to.y(),to.z());
+  glEnd();
+}
+
+static void Draw2DLine(QVector2D from, QVector2D to, int lineWidth, QColor color) {
+  glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+  glLineWidth(lineWidth);
+  glBegin(GL_LINES);
+  glVertex2f(from.x(),from.y());
+  glVertex2f(to.x(),to.y());
+  glEnd();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// QRANGE
+////////////////////////////////////////////////////////////////////////////////
+QRange::QRange():
+  min(-1.0,-1.0,-1.0), 
+  max(1.0,1.0,1.0) 
+{}
+
+QRange::QRange(double _min, double _max):
+  min(_min,_min,_min), 
+  max(_max,_max,_max) 
+{}
+
+QVector3D QRange::center() const { 
+  return 0.5*(max+min);
+}
+
+QVector3D QRange::delta() const {
+  return max-min;
+}
+
+void QRange::setIfMin(QVector3D vec) {
+  if(vec.x() < min.x()) min.setX(vec.x());
+  if(vec.y() < min.y()) min.setY(vec.y());
+  if(vec.z() < min.z()) min.setZ(vec.z());
+}
+
+void QRange::setIfMax(QVector3D vec) {
+  if(vec.x() > max.x()) max.setX(vec.x());
+  if(vec.y() > max.y()) max.setY(vec.y());
+  if(vec.z() > max.z()) max.setZ(vec.z());
+}
 
 ////////////////////////////////////////////////////////////////////////////////
 // QCURVE3D
@@ -43,24 +130,19 @@ void QCurve3D::addData( const QVector<QVector3D>& data) {
 }
 
 void QCurve3D::addData(const QVector3D& data) {
-  if(data.x() < mRange.min.x()) mRange.min.setX( data.x());
-  if(data.y() < mRange.min.y()) mRange.min.setY( data.y());
-  if(data.z() < mRange.min.z()) mRange.min.setZ( data.z());
-
-  if(data.x() > mRange.max.x()) mRange.max.setX( data.x());
-  if(data.y() > mRange.max.y()) mRange.max.setY( data.y());
-  if(data.z() > mRange.max.z()) mRange.max.setZ( data.z());
+  mRange.setIfMin(data);
+  mRange.setIfMax(data);
 
   mVertices.push_back(data);
   mFaces.push_back(mVertices.size()-1);
 }
 
 QVector3D&  QCurve3D::operator[](int i) {
-  return getValue(i);
+  return value(i);
 }
 
 const QVector3D&  QCurve3D::operator[](int i) const {
-  return getValue(i);
+  return value(i);
 }
 
 void QCurve3D::draw() const {
@@ -95,7 +177,6 @@ QAxis::QAxis():
 }
 
 void QAxis::drawPlane(double minX, double minY, double maxX, double maxY) const  {
-
   
   glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
   glEnable(GL_POLYGON_OFFSET_FILL);
@@ -103,17 +184,7 @@ void QAxis::drawPlane(double minX, double minY, double maxX, double maxY) const 
 
   // Plane
   if(mShowPlane) {
-    glColor4f(mPlaneColor.redF(), mPlaneColor.greenF(),mPlaneColor.blueF(),mPlaneColor.alphaF());
-    glBegin(GL_QUADS);
-    glVertex3f(minX,minY,0);
-    glNormal3f(0,0,1);
-    glVertex3f(maxX,minY,0);
-    glNormal3f(0,0,1);
-    glVertex3f(maxX,maxY,0);
-    glNormal3f(0,0,1);
-    glVertex3f(minX,maxY,0);
-    glNormal3f(0,0,1);
-    glEnd();
+    Draw3DPlane(QVector3D(minX,minY,0), QVector3D(maxX, maxY,0), mPlaneColor);
   }
 
 
@@ -121,39 +192,25 @@ void QAxis::drawPlane(double minX, double minY, double maxX, double maxY) const 
   glPolygonOffset(-1.0f,-1.0f);
   // Grid
   if(mShowGrid) {
-    glColor4f(mGridColor.redF(), mGridColor.greenF(),mGridColor.blueF(),mGridColor.alphaF());
-    glLineWidth(1);
-    glBegin(GL_LINES);
-    double tStep = (maxX-minX)/10.0;
-    for (double x =minX+tStep; x < maxX; x +=tStep) {
-      glVertex3f(x,minY,0);
-      glVertex3f(x,maxY,0);
+    for (double x =minX+(maxX-minX)/10.0; x < maxX; x += (maxX-minX)/10.0) {
+      Draw3DLine(QVector3D(x,minY,0), QVector3D(x,maxY,0), 1, mGridColor);
     }
-    tStep = (maxY-minY)/10.0;
-    for (double y = minY+tStep; y < maxY; y +=tStep) {
-      glVertex3f(minX,y,0);
-      glVertex3f(maxX,y,0);
+    for (double y = minY+(maxY-minY)/10.0; y < maxY; y += (maxY-minY)/10.0) {
+      Draw3DLine(QVector3D(minX,y,0), QVector3D(maxX,y,0), 1, mGridColor);
     }	 
-    glEnd();
   }
 
   // Axis
   if(mShowAxis) {
-    glColor4f(mAxisColor.redF(), mAxisColor.greenF(),mAxisColor.blueF(),mAxisColor.alphaF());
-    glLineWidth(1);
-    glBegin(GL_LINES);
-    glVertex3f(minX,minY,0);
-    glVertex3f(maxX+ abs(maxX-minX)*0.1,minY,0);
-    glEnd();
+    Draw3DLine(QVector3D(minX,minY,0), QVector3D(maxX + abs(maxX-minX)*0.1, minY,0), 1, mAxisColor);
   }
-
 
   glDisable(GL_POLYGON_OFFSET_LINE);
   glDisable(GL_POLYGON_OFFSET_FILL);
 
   if( mShowLabel) {
     glColor4f(mLabelColor.redF(),mLabelColor.greenF(),mLabelColor.blueF(),mLabelColor.alphaF());
-    mPlot->renderTextAtWorldCoord(QVector3D(maxX + abs(maxX-minX)*0.1,minY,0),mLabel);
+    mPlot->renderTextAtWorldCoordinates(QVector3D(maxX + abs(maxX-minX)*0.1,minY,0),mLabel);
   }
 
 }
@@ -239,7 +296,7 @@ void QPlot3D::paintGL() {
 
   glScalef(mScale.x(),mScale.y(),mScale.z());
   
-  QVector3D tCenter = mXAxis.getRange().getCenter();
+  QVector3D tCenter = mXAxis.range().center();
   glTranslatef(-tCenter.x(),-tCenter.y(),-tCenter.z());
 
   // DRAW AXIS
@@ -271,7 +328,7 @@ void QPlot3D::drawLegend(){
   double textHeight = 0;
   int nrCurves = mCurves.size();
   for (int i = 0; i < nrCurves; i++) {
-    QString string = mCurves[i]->getName();
+    QString string = mCurves[i]->name();
     if(fontMetrics().width(string) > textWidth) textWidth = fontMetrics().width(string);
     if(fontMetrics().height() > textHeight) textHeight = fontMetrics().height();
   }
@@ -281,26 +338,15 @@ void QPlot3D::drawLegend(){
   double tHeight = 5 + nrCurves*textHeight + 5;
   double x0 = width()-tWidth-5; 
   double y0 = 5;
+
   enable2D();
-
-  glColor4f(0.8,0.8,0.85,0.5);
-  // glColor4f(0.5,0.5,0.5,0.5);
-  glBegin(GL_QUADS);
-  glVertex2f(x0,y0);
-  glVertex2f(x0+tWidth, y0);
-  glVertex2f(x0+tWidth, y0+tHeight);
-  glVertex2f(x0,y0+tHeight);
-  glEnd();
-
-  glColor4f(0,0,0,1);
-  glBegin(GL_LINE_STRIP);
-  glVertex2f(x0,y0);
-  glVertex2f(x0+tWidth, y0);
-  glVertex2f(x0+tWidth, y0+tHeight);
-  glVertex2f(x0,y0+tHeight);
-  glVertex2f(x0,y0);
-  glEnd();
-
+  // Draw box
+  Draw2DPlane(QVector2D(x0,y0),             QVector2D(x0+tWidth,y0+tHeight),QColor(204,204,217,128));
+  // Draw contour lines
+  Draw2DLine(QVector2D(x0,y0),                QVector2D(x0+tWidth,y0),         1, QColor(0,0,0,255));
+  Draw2DLine(QVector2D(x0+tWidth,y0),         QVector2D(x0+tWidth,y0+tHeight), 1, QColor(0,0,0,255));
+  Draw2DLine(QVector2D(x0+tWidth,y0+tHeight), QVector2D(x0,y0+tHeight),        1, QColor(0,0,0,255));
+  Draw2DLine(QVector2D(x0,y0+tHeight),        QVector2D(x0,y0),                1, QColor(0,0,0,255));  
   disable2D();
 
   y0 = 10;
@@ -309,39 +355,28 @@ void QPlot3D::drawLegend(){
 
     x0 = width()-tWidth-5; 
 
-    QColor tColor = mCurves[i]->getColor();
     enable2D();
-    glColor4f(tColor.redF(),tColor.greenF(),tColor.blueF(),1);
-    glLineWidth(mCurves[i]->getLineWidth());
-    glBegin(GL_LINES);
-    glVertex2f(x0+5,y0+0.5*textHeight);
-    glVertex2f(x0+5+20,y0+0.5*textHeight);
-    glEnd();
+    Draw2DLine(QVector2D(x0+5,   y0+0.5*textHeight), 
+	       QVector2D(x0+5+20,y0+0.5*textHeight), 
+	       mCurves[i]->lineWidth(), 
+	       mCurves[i]->color());
     disable2D();
-    glLineWidth(1);
 
     x0 += 30;
     glColor4f(0,0,0,1);
     y0 += textHeight;
-    renderText((int)x0,(int)y0,mCurves[i]->getName());
+    renderText((int)x0,(int)y0,mCurves[i]->name());
   }
 
 
 }
 
 void QPlot3D::drawTextBox(int x, int y, QString string)  {
-  const double textWidth = fontMetrics().width(string);
+  const double textWidth  = fontMetrics().width(string);
   const double textHeight = fontMetrics().height();
 
   enable2D();
-  glColor4f(0.8,0.8,0.85,0.5);
-  // glColor4f(0.5,0.5,0.5,0.5);
-  glBegin(GL_QUADS);
-  glVertex2f(x-5           ,y-textHeight-5);
-  glVertex2f(x+10+textWidth,y-textHeight-5);
-  glVertex2f(x+10+textWidth,y+5);
-  glVertex2f(x-5           ,y+5);
-  glEnd();
+  Draw2DPlane(QVector2D(x-5,y+5), QVector2D(x+10+textWidth, y-textHeight-5), QColor(204,204,217,128));
   disable2D();
 
   glColor4f(0,0,0,1);
@@ -396,18 +431,19 @@ void QPlot3D::mouseMoveEvent(QMouseEvent *event)
   if (event->buttons() & Qt::LeftButton) {
     
     if(event->modifiers() == Qt::ControlModifier) {
-      setPitch(getPitch() + dx);
+      setPitch(pitch() + dx);
     }else {
-      setRoll(getRoll() + dy);
-      setYaw(getYaw() + dx);
+      setRoll(roll() + dy);
+      setYaw(yaw() + dx);
     }
   } else if (event->buttons() & Qt::RightButton) {
-    setPan(getPan() + QVector3D((double)dx/32,-(double)dy/32,0.0));
+    setPan(pan() + QVector3D(dx/32.0,-dy/32.0,0.0));
   }
   mLastMousePos = event->pos();
 }
 
 void QPlot3D::mouseDoubleClickEvent(QMouseEvent* event) {
+  event->accept();
   mAxisEqual = !mAxisEqual;
   rescaleAxis();
 }
@@ -415,31 +451,32 @@ void QPlot3D::mouseDoubleClickEvent(QMouseEvent* event) {
 void QPlot3D::wheelEvent(QWheelEvent* event) 
 {
   event->accept();  
-  setZoom( getZoom() + (double)event->delta()/32);
+  setZoom( zoom() + (double)event->delta()/32);
 }
 
 void QPlot3D::addCurve(QCurve3D* curve) { 
   mCurves.push_back(curve);  
-
-  // Readjust axes
-  QRange tRange = mXAxis.getRange();
-  if(curve->getRange().min.x() < tRange.min.x() ) tRange.min.setX(curve->getRange().min.x());
-  if(curve->getRange().min.y() < tRange.min.y() ) tRange.min.setY(curve->getRange().min.y());
-  if(curve->getRange().min.z() < tRange.min.z() ) tRange.min.setZ(curve->getRange().min.z());
-  if(curve->getRange().max.x() > tRange.max.x() ) tRange.max.setX(curve->getRange().max.x());
-  if(curve->getRange().max.y() > tRange.max.y() ) tRange.max.setY(curve->getRange().max.y());
-  if(curve->getRange().max.z() > tRange.max.z() ) tRange.max.setZ(curve->getRange().max.z());
-  
-  mXAxis.setRange(tRange);
-  mYAxis.setRange(tRange);
-  mZAxis.setRange(tRange);
-
-  // Rescale plot
   rescaleAxis();
   updateGL();
 } 
 
+void QPlot3D::setBackgroundColor(QColor color) { 
+  mBackgroundColor = color;   
+  makeCurrent(); 
+  qglClearColor(mBackgroundColor); 
+}
+
 void QPlot3D::rescaleAxis() {
+  QRange tRange = mXAxis.range();
+  int tSize = mCurves.size();
+  for(int i = 0; i < tSize; i++) {
+    tRange.setIfMin(mCurves[i]->range());
+    tRange.setIfMax(mCurves[i]->range());
+  }
+  mXAxis.setRange(tRange);
+  mYAxis.setRange(tRange);
+  mZAxis.setRange(tRange);
+  
   if (mAxisEqual) 
     axisEqual();
   else 
@@ -447,9 +484,7 @@ void QPlot3D::rescaleAxis() {
 }
 
 void QPlot3D::axisEqual() {
-  QRange tRange = mXAxis.getRange();
-
-  QVector3D delta(tRange.max.x()-tRange.min.x(),tRange.max.y()-tRange.min.y(),tRange.max.z()-tRange.min.z());
+  QVector3D delta = mXAxis.range().delta();
   double k = std::max(delta.x(),std::max(delta.y(),delta.z()));
   mScale.setX( 10.0/k);
   mScale.setY( 10.0/k);
@@ -458,21 +493,19 @@ void QPlot3D::axisEqual() {
 }
 
 void QPlot3D::axisTight() {
-  QRange tRange = mXAxis.getRange();
-
-  QVector3D delta(tRange.max.x()-tRange.min.x(),tRange.max.y()-tRange.min.y(),tRange.max.z()-tRange.min.z());
+  QVector3D delta = mXAxis.range().delta();
   mScale.setX( 10.0/delta.x());
   mScale.setY( 10.0/delta.y());
   mScale.setZ( 10.0/delta.z());
   updateGL();
 }
 
-void QPlot3D::renderTextAtWorldCoord(const QVector3D& vec, QString str) {
-  QVector3D sVec = toScreenCoord(vec);
+void QPlot3D::renderTextAtWorldCoordinates(const QVector3D& vec, QString str) {
+  QVector3D sVec = toScreenCoordinates(vec);
   renderText(sVec.x(),sVec.y(),str);  
 }
 
-QVector3D QPlot3D::toScreenCoord(const QVector3D& vec) {
+QVector3D QPlot3D::toScreenCoordinates(const QVector3D& vec) {
   // v' = P*M*v
   GLdouble m[16];
   GLdouble p[16];
@@ -493,8 +526,8 @@ QVector3D QPlot3D::toScreenCoord(const QVector3D& vec) {
   const double f4 = m[3]*vec.x() + m[7]*vec.y() + m[11]*vec.z() + m[15];
 
   // P*M*v
-  double g1 = p[0]*f1 + p[4]*f2 + p[8]*f3 + p[12]*f4;
-  double g2 = p[1]*f1 + p[5]*f2 + p[9]*f3 + p[13]*f4;
+  double g1 = p[0]*f1 + p[4]*f2 + p[8]*f3  + p[12]*f4;
+  double g2 = p[1]*f1 + p[5]*f2 + p[9]*f3  + p[13]*f4;
   double g3 = p[2]*f1 + p[6]*f2 + p[10]*f3 + p[14]*f4;
   double g4 = -f3;
 
@@ -504,9 +537,9 @@ QVector3D QPlot3D::toScreenCoord(const QVector3D& vec) {
   g3 /= g4;
        
   return QVector3D( (g1*0.5+0.5)*viewPort[2] + viewPort[0], 
-		    height() - ((g2*0.5+0.5)*viewPort[3] + viewPort[1]),
+		    height()- ((g2*0.5+0.5)*viewPort[3] + viewPort[1]),
 		    (1.0+g3)*0.5);
-      
+  
 }
 
 void QPlot3D::hideAxes() {
