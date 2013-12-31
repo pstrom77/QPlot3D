@@ -157,7 +157,7 @@ class QAxis: public QObject  {
   bool   showLabel()  const  {return mShowLabel; }
   QString label() const { return mLabel; }
   QColor planeColor() { return mPlaneColor; }
-  QColor getGridColor() { return mGridColor; }
+  QColor gridColor() { return mGridColor; }
   QColor axisColor() { return mAxisColor; }
   QColor labelColor() { return mLabelColor; }
 
