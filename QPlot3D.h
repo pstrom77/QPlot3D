@@ -1,0 +1,268 @@
+#ifndef __Q_3D_PLOT_H__
+#define __Q_3D_PLOT_H__
+
+#include <QtCore>
+#include <QtOpenGL>
+
+
+/*!
+
+ */
+
+class QPlot3D;
+
+/*!
+  Class that represents a 3D range (similar to a bounding box).
+  The class defines a minimum point and a maximal point in 3D space.
+*/
+class QRange {
+ public:
+  QRange() {
+    min.setX(-1.0); min.setY(-1.0); min.setZ(-1.0);
+    max.setX(1.0); max.setY(1.0); max.setZ(1.0);
+  }
+  QRange(double _min, double _max) {
+    min.setX(_min); min.setY(_min); min.setZ(_min);
+    max.setX(_max); max.setY(_max); max.setZ(_max);    
+  }
+  QVector3D getCenter() const{ return 0.5*(min+max); }
+  QVector3D min;
+  QVector3D max;
+};
+
+/*!
+  The QCurve3D class is a container for the data representing a 3D-curve. 
+  The class also encaspulates attributes associated with the 
+
+  Example: 
+  \code
+  // Setup the curve
+  QCurve aCurve("Simple Line");
+  aCurve.addData(0.0, 0.0, 0.0);
+  aCurve.addData(1.0, 1.0, 1.0);
+  aCurve.setColor(Qt::green);
+  aCurve.setLineWidth(3);
+
+  // Add the curve to the plot
+  mPlot->addCurve(&aCurve);
+
+  // Change the value of the last point
+  aCurve[aCurve.size()-1].setZ(3.0);
+  
+  \endcode
+ */
+class QCurve3D: public QObject{
+  Q_OBJECT
+   friend class QPlot3D;
+
+ public:
+  QCurve3D();
+  QCurve3D(QString name);
+
+  // Getters
+  QColor getColor() const { return mColor; }
+  double getLineWidth() const { return mLineWidth; }
+  QVector3D& getValue(int index)  { return mVertices[index]; }
+  const QVector3D& getValue(int index) const { return mVertices[index]; }
+  QRange getRange() const { return mRange; }
+  QString getName() const { return mName;}
+
+  // Setters
+  void setColor(QColor color) { mColor = color; }
+  void setLineWidth(int value) { mLineWidth = value; }
+  void setName(QString name) { mName = name; }
+
+  // Misc
+  void addData(const double& x, const double& y, const double& z);
+  void addData(const QVector<double>& x, const QVector<double>& y, const QVector<double>& z);
+  void addData(const QVector<QVector3D>& data);
+  void addData(const QVector3D& data);
+  void clear() { mVertices.clear(); }
+  int  size() const { return mVertices.size(); }
+
+  // Operators
+  QVector3D& operator[](int i);  
+  const QVector3D& operator[](int i) const;  
+
+ protected:
+  void draw() const;
+
+ private:
+  QString mName;
+  QColor  mColor;
+  int     mLineWidth;
+
+  QVector<QVector3D> mVertices;
+  QVector<GLushort>  mFaces;  
+  QRange mRange;
+
+};
+
+/*!
+  Class that represents the drawable axis plane.
+
+  Example:
+  \code
+  // Don't draw plane
+  mPlot->getXYAxis().setShowPlane(false);
+  
+
+  \endcode
+ */
+class QAxis: public QObject  {
+  Q_OBJECT
+  friend class QPlot3D;
+ public:
+  QAxis();
+  enum Axis{
+    X_AXIS = 0,
+    Y_AXIS = 1,
+    Z_AXIS = 2
+  };
+
+  void setRange(QRange range) { mRange = range; }
+  void setAxis(Axis axis) { mAxis = axis; }
+  void setShowPlane(bool value) {mShowPlane = value; }
+  void setShowGrid(bool value)  {mShowGrid = value; }
+  void setShowAxis(bool value)  {mShowAxis = value; }
+  void setShowLabel(bool value) {mShowLabel = value; }
+  void setLabel(QString label) { mLabel = label; }
+  void setPlaneColor(QColor color) { mPlaneColor = color; }
+  void setGridColor(QColor color) { mGridColor = color; }
+  void setAxisColor(QColor color) { mAxisColor = color; }
+  void setLabelColor(QColor color) { mLabelColor = color; }
+
+  QRange getRange() const { return mRange; }
+  bool   getShowPlane() const  {return mShowPlane; }
+  bool   getShowGrid()  const  {return mShowGrid; }
+  bool   getShowAxis()  const  {return mShowAxis; }
+  bool   getShowLabel()  const  {return mShowLabel; }
+  QString getLabel() const { return mLabel; }
+  QColor getPlaneColor() { return mPlaneColor; }
+  QColor getGridColor() { return mGridColor; }
+  QColor getAxisColor() { return mAxisColor; }
+  QColor getLabelColor() { return mLabelColor; }
+
+ protected: 
+  void draw() const;
+  void setPlot(QPlot3D* plot) { mPlot = plot; }
+ private:
+  void drawPlane(double minX, double minY, double maxX, double maxY) const;
+
+ private:
+  QPlot3D* mPlot;
+  QRange mRange;
+  Axis  mAxis;
+  bool mShowPlane, mShowGrid, mShowAxis, mShowLabel;
+  QString mLabel;
+  QColor mPlaneColor, mGridColor, mAxisColor, mLabelColor;
+};
+
+/*!
+  Class that represents the plot window.
+  A QPlot3D is a continer for all the curves, axes and legend and responsible for adding curves, removeing curves and drawing curve, axes, and legends.
+
+  User interactions like rotation, zooming and panning  with the mouse is included int QPlot3D.
+
+  Example: 
+  \code
+  // Setup a plot
+  QPlot3D mPlot;
+
+  // Setup the curve
+  QCurve aCurve("Simple Line");
+  aCurve.addData(0.0, 0.0, 0.0);
+  aCurve.addData(1.0, 1.0, 1.0);
+  aCurve.setColor(Qt::green);
+  aCurve.setLineWidth(3);
+
+  // Add the curve to the plot
+  mPlot.addCurve(&aCurve);
+  
+  // Remove legends
+  mPlot.setShowLegend(false);
+  
+  // Change view
+  mPlot.setAzimuth(45.0)
+  mPlot.setElevation(45.0)
+  
+  // Raise the plot window.
+  mPlot.show();
+  mPlot.setFocus();
+
+  
+ */
+class QPlot3D: public QGLWidget {
+  Q_OBJECT
+  friend class QAxis;
+ public:
+  QPlot3D(QWidget* parent=NULL);
+  ~QPlot3D();
+
+  void addCurve(QCurve3D* curve);
+  void clear() { mCurves.clear(); }
+  void setBackground(QColor color) { mBackgroundColor = color;   makeCurrent(); qglClearColor(mBackgroundColor); }
+
+  double    getZoom()  const { return mTranslate.z(); }
+  QVector3D getPan()   const { return mTranslate;     }
+  QColor    getBackground() const { return mBackgroundColor; }
+  double    getAzimuth() const { return -mRotation.z(); }
+  double    getElevation() const { return mRotation.x(); }
+  QAxis&    getXAxis() { return mXAxis; }
+  QAxis&    getYAxis() { return mYAxis; }
+  QAxis&    getZAxis() { return mZAxis; }
+  
+ private:
+  double getRoll()  const { return mRotation.x();  }
+  double getPitch() const { return mRotation.y();  }
+  double getYaw()   const { return mRotation.z();  }
+  void   drawLegend();
+  void   drawTextBox(int x, int y, QString string);
+  void   enable2D();
+  void   disable2D();
+  QVector3D toScreenCoord(const QVector3D& worldCoord);
+
+ public slots:
+   void setZoom(double value)   { mTranslate.setZ(value); updateGL(); }
+   void setPan(QVector3D value) { mTranslate = value;     updateGL(); }
+   void setShowAzimuthElevation(bool value) { mShowAzimuthElevation = value; }
+   void setAzimuth(double value)   { mRotation.setZ(-value); }
+   void setElevation(double value) { mRotation.setX(value); }
+   void setShowLegend(bool value) { mShowLegend = value; }
+   void setAxisEqual(bool value) { mAxisEqual = value; rescaleAxis();}
+   void hideAxes();
+   void showAxes();
+   
+ private slots:
+   void setRoll(double value)   { mRotation.setX(value);  updateGL(); }
+   void setPitch(double value)  { mRotation.setY(value);  updateGL(); }
+   void setYaw(double value)    { mRotation.setZ(value);  updateGL(); }
+   void rescaleAxis();
+   void axisEqual();
+   void axisTight();
+
+ protected:
+  void initializeGL();
+  void paintGL();
+  void resizeGL(int width, int height);
+  void mousePressEvent(QMouseEvent* event);
+  void mouseMoveEvent(QMouseEvent* event);
+  void mouseDoubleClickEvent(QMouseEvent* event);
+  void wheelEvent(QWheelEvent* event);
+  void renderTextAtWorldCoord(const QVector3D& vec, QString);
+
+ private:
+   QList<QCurve3D*> mCurves;
+   QPoint mLastMousePos;
+   QColor mBackgroundColor;
+
+   QVector3D mTranslate;
+   QVector3D mRotation;
+   QVector3D mScale;
+
+   bool mShowAzimuthElevation, mShowLegend, mAxisEqual;
+   QAxis mXAxis, mYAxis, mZAxis;
+
+};
+
+#endif
