@@ -236,7 +236,7 @@ QVector<double> QAxis::getTicks(double minValue, double maxValue)  const {
 }
 
 void QAxis::drawAxisPlane() const {
-
+  
   double minX = mXTicks[0];
   double maxX = mXTicks[mXTicks.size()-1];
   double minY = mYTicks[0];
@@ -322,6 +322,9 @@ void QAxis::drawAxisPlane() const {
 }
 
 void QAxis::draw() const {
+  if(mXTicks.isEmpty()) return;
+  if(mYTicks.isEmpty()) return;
+
   glPushMatrix();
   
   if(mAxis == X_AXIS) 
