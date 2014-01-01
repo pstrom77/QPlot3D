@@ -445,16 +445,16 @@ void QAxis::adjustPlaneView() {
     
     if(180.0 <= mPlot->azimuth() && 270.0 > mPlot->azimuth() )
       {
-	if( mAxis == X_AXIS) setVisibleTicks(false,false,true,true);
-	if( mAxis == Y_AXIS) setVisibleTicks(false,false,false,false);
-	if( mAxis == Z_AXIS) setVisibleTicks(true,false,false,false);
+	if( mAxis == X_AXIS) setVisibleTicks(false,false,false,false);
+	if( mAxis == Y_AXIS) setVisibleTicks(true,false,false,false);
+	if( mAxis == Z_AXIS) setVisibleTicks(true,false,false,true);
       }
       
     if(270.0 <= mPlot->azimuth() && 360.0 > mPlot->azimuth() ) 
       {
-	if( mAxis == X_AXIS) setVisibleTicks(true,false,false,true);
-	if( mAxis == Y_AXIS) setVisibleTicks(false,false,false,true);
-	if( mAxis == Z_AXIS) setVisibleTicks(false,false,false,false);
+	if( mAxis == X_AXIS) setVisibleTicks(false,false,false,false);
+	if( mAxis == Y_AXIS) setVisibleTicks(true,false,false,false);
+	if( mAxis == Z_AXIS) setVisibleTicks(true,false,false,true);
       }
     
 
