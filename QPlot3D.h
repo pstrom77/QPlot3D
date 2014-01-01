@@ -165,7 +165,8 @@ class QAxis: public QObject  {
   void draw() const;
   void setPlot(QPlot3D* plot) { mPlot = plot; }
  private:
-  void drawPlane(double minX, double minY, double maxX, double maxY) const;
+  void drawAxis(double minX, double minY, double maxX, double maxY) const;
+  QVector<double> getTicks(double min, double max) const;
 
  private:
   QPlot3D* mPlot;
@@ -230,7 +231,8 @@ class QPlot3D: public QGLWidget {
   QAxis&    yAxis() { return mYAxis; }
   QAxis&    zAxis() { return mZAxis; }
   QVector3D toScreenCoordinates(const QVector3D& worldCoord);
-  void      renderTextAtWorldCoordinates(const QVector3D& vec, QString string);
+  void      renderTextAtWorldCoordinates(const QVector3D& vec, QString string, int fontSize = 12);
+  QVector3D cameraPositionInWorldCoordinates() const;
 
  public slots:
    void setZoom(double value)   { mTranslate.setZ(value); updateGL(); }
@@ -251,7 +253,7 @@ class QPlot3D: public QGLWidget {
    void   drawTextBox(int x, int y, QString string);
    void   enable2D();
    void   disable2D();
-   
+
  private slots:
    void setRoll(double value)   { mRotation.setX(value);  updateGL(); }
    void setPitch(double value)  { mRotation.setY(value);  updateGL(); }

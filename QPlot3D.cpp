@@ -175,27 +175,62 @@ QAxis::QAxis():
 {
 }
 
-void QAxis::drawPlane(double minX, double minY, double maxX, double maxY) const  {
+ QVector<double> QAxis::getTicks(double minValue, double maxValue)  const {
+
+  QVector<double> tTicks;
+  double step  = (maxValue-minValue)/5.0;
+
+  double factor = pow(10.0, floor((log(step)/log(10.0))));
+
+  double tmp = step/factor;
+  if(tmp < 5) {
+    step = (int)(tmp*2)/2.0*factor;
+  } else {
+    step = (int)(tmp*0.5)/2.0*factor; 
+  }
+  int firstStep = floor(minValue/step);
+  int lastStep  = ceil(maxValue/step);
+  int tickCount = lastStep-firstStep+1;
+
+  for (int i = 0; i < tickCount; i++) {
+    tTicks.push_back((firstStep+i)*step);
+  }
+  return tTicks;
+  
+}
+
+void QAxis::drawAxis(double minX, double minY, double maxX, double maxY) const  {
   
   glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
   glEnable(GL_POLYGON_OFFSET_FILL);
   glPolygonOffset(1.0f,1.0f);
+
+
+  QVector<double> ticksX = getTicks(minX,maxX);
+  QVector<double> ticksY = getTicks(minY,maxY);
+  minX = ticksX[0];
+  maxX = ticksX[ticksX.size()-1];
+  minY = ticksY[0];
+  maxY = ticksY[ticksY.size()-1];
 
   // Plane
   if(mShowPlane) {
     Draw3DPlane(QVector3D(minX,minY,0), QVector3D(maxX, maxY,0), mPlaneColor);
   }
 
-
   glEnable(GL_POLYGON_OFFSET_LINE);
   glPolygonOffset(-1.0f,-1.0f);
   // Grid
   if(mShowGrid) {
-    for (double x =minX+(maxX-minX)/10.0; x < maxX; x += (maxX-minX)/10.0) {
-      Draw3DLine(QVector3D(x,minY,0), QVector3D(x,maxY,0), 1, mGridColor);
+    // for (double x =minX+(maxX-minX)/10.0; x < maxX; x += (maxX-minX)/10.0) {
+    for (int i = 0; i < ticksX.size(); i++) {
+      Draw3DLine(QVector3D(ticksX[i],minY,0), QVector3D(ticksX[i],maxY,0), 1, mGridColor);
+      glColor4f(mLabelColor.redF(),mLabelColor.greenF(),mLabelColor.blueF(),mLabelColor.alphaF());
+      mPlot->renderTextAtWorldCoordinates(QVector3D(ticksX[i],maxY,0),QString("%1").arg(ticksX[i],3,'f',1),10);
     }
-    for (double y = minY+(maxY-minY)/10.0; y < maxY; y += (maxY-minY)/10.0) {
-      Draw3DLine(QVector3D(minX,y,0), QVector3D(maxX,y,0), 1, mGridColor);
+    // for (double y = minY+(maxY-minY)/10.0; y < maxY; y += (maxY-minY)/10.0) {
+    for (int i = 1;i < ticksY.size(); i++) {
+      Draw3DLine(QVector3D(minX,ticksY[i],0), QVector3D(maxX,ticksY[i],0), 1, mGridColor);
     }	 
   }
 
@@ -207,6 +242,7 @@ void QAxis::drawPlane(double minX, double minY, double maxX, double maxY) const 
   glDisable(GL_POLYGON_OFFSET_LINE);
   glDisable(GL_POLYGON_OFFSET_FILL);
 
+  // Label
   if( mShowLabel) {
     glColor4f(mLabelColor.redF(),mLabelColor.greenF(),mLabelColor.blueF(),mLabelColor.alphaF());
     mPlot->renderTextAtWorldCoordinates(QVector3D(maxX + abs(maxX-minX)*0.1,minY,0),mLabel);
@@ -217,23 +253,34 @@ void QAxis::drawPlane(double minX, double minY, double maxX, double maxY) const 
 void QAxis::draw() const {
   glPushMatrix();
 
-  QVector3D minRange = mRange.min;
-  QVector3D maxRange = mRange.max;
-  // glTranslatef(minRange.x(),minRange.y(),minRange.z());
+  // Increase axis box with 5 percent in max and min for improved visualization
+  QVector3D minRange = mRange.min - (mRange.max-mRange.min)*0.05;
+  QVector3D maxRange = mRange.max + (mRange.max-mRange.min)*0.05;
 
   if(mAxis == X_AXIS) {
-    glTranslatef(0,0,minRange.z());
-    drawPlane(minRange.x(),minRange.y(), maxRange.x(),maxRange.y());
+    
+    // if( (cameraPositionInWorldCoordinates() - (QVector3D(maxRange.x(),maxRange.y(),0)-QVector3D(minRange.x(),minRange.y(),0)) ).length() <
+    // 	(cameraPositionInWorldCoordinates() - (QVector3D(maxRange.x(),maxRange.y(),0)-QVector3D(minRange.x(),minRange.y(),0)) ).length() ) {
+    //   QVector<double> ticksZ = getTicks(minRange.z(),maxRange.z());
+    //   glTranslatef(0,0,ticksZ[0]);
+    //   drawAxis(minRange.x(),minRange.y(), maxRange.x(),maxRange.y());
+    // } else {      
+      QVector<double> ticksZ = getTicks(minRange.z(),maxRange.z());
+      glTranslatef(0,0,ticksZ[0]);
+      drawAxis(minRange.x(),minRange.y(), maxRange.x(),maxRange.y());      
+    // }
   } else if (mAxis == Y_AXIS) {
-    glTranslatef(minRange.x(),0,0);
+    QVector<double> ticksX = getTicks(minRange.x(),maxRange.x());
+    glTranslatef(ticksX[0],0,0);
     glRotatef(90, 1,0,0);
     glRotatef(90, 0,1,0);    
-    drawPlane(minRange.y(),minRange.z(), maxRange.y(),maxRange.z());
+    drawAxis(minRange.y(),minRange.z(), maxRange.y(),maxRange.z());
   } else {
-    glTranslatef(0,minRange.y(),0);
+    QVector<double> ticksY = getTicks(minRange.y(),maxRange.y());
+    glTranslatef(0,ticksY[0],0);
     glRotatef(-90, 1,0,0);
     glRotatef(-90, 0,0,1);    
-    drawPlane(minRange.z(),minRange.x(), maxRange.z(),maxRange.x());
+    drawAxis(minRange.z(),minRange.x(), maxRange.z(),maxRange.x());
   }
 
   glPopMatrix();
@@ -285,7 +332,6 @@ void QPlot3D::initializeGL() {
 void QPlot3D::paintGL() {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
-
 
   glTranslatef(mTranslate.x(),mTranslate.y(),mTranslate.z());
 
@@ -499,7 +545,22 @@ void QPlot3D::axisTight() {
   updateGL();
 }
 
-void QPlot3D::renderTextAtWorldCoordinates(const QVector3D& vec, QString str) {
+QVector3D QPlot3D::cameraPositionInWorldCoordinates() const {
+
+  QVector3D tObjectCenter = mXAxis.range().center();
+  
+  QQuaternion q1 = QQuaternion::fromAxisAndAngle(1.0, 0.0, 0.0, (mRotation.x()-90));
+  QQuaternion q2 = QQuaternion::fromAxisAndAngle(0.0, 1.0, 0.0, mRotation.y());
+  QQuaternion q3 = QQuaternion::fromAxisAndAngle(0.0, 0.0, 1.0, mRotation.z());
+  QQuaternion q  = (q1*q2*q3).conjugate();
+  
+  return tObjectCenter + q.rotatedVector(-QVector3D(mTranslate.x()/mScale.x(),mTranslate.y()/mScale.y(),mTranslate.z()/mScale.z()));
+}
+
+void QPlot3D::renderTextAtWorldCoordinates(const QVector3D& vec, QString str, int fontSize) {
+  QFont tFont  = font();
+  tFont.setPixelSize(fontSize);
+  setFont(tFont);
   QVector3D sVec = toScreenCoordinates(vec);
   renderText(sVec.x(),sVec.y(),str);  
 }
