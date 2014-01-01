@@ -117,7 +117,7 @@ int main(int argc, char* argv[]) {
   plot.move(10,10);
   plot.setFocus();
   plot.show();
-
+#if 1
   //////////////////////////////////////////////////////////////////////  
   // Example 2: A Spiral way of from origin...
   //////////////////////////////////////////////////////////////////////  
@@ -132,9 +132,9 @@ int main(int argc, char* argv[]) {
   plot2.addCurve(&bigSpiral);
 
   // Change labels on axes from the default x,y,z
-  plot2.xAxis().setLabel("North");
-  plot2.yAxis().setLabel("East");
-  plot2.zAxis().setLabel("Down");
+  plot2.setXLabel("North");
+  plot2.setYLabel("East");
+  plot2.setZLabel("Down");
 
   // Window logistics...
   plot2.resize(300,300);
@@ -182,20 +182,15 @@ int main(int argc, char* argv[]) {
   tPlot2.yAxis().setGridColor(Qt::yellow);
   tPlot2.zAxis().setGridColor(Qt::yellow);
 
-  tPlot3.xAxis().setLabel("Forward");
-  tPlot3.yAxis().setLabel("Right");
-  tPlot3.zAxis().setLabel("Down");
-  tPlot3.hideAxes();
+  tPlot3.setXLabel("Forward");
+  tPlot3.setYLabel("Right");
+  tPlot3.setZLabel("Down");
+  tPlot3.setShowAxis(false);
+  tPlot3.setAdjustPlaneView(false);
+  tPlot3.setShowAxisBox(true);
 
-  tPlot4.xAxis().setShowPlane(false);
-  tPlot4.yAxis().setShowPlane(false);
-  tPlot4.zAxis().setShowPlane(false);
-  tPlot4.xAxis().setShowGrid(false);
-  tPlot4.yAxis().setShowGrid(false);
-  tPlot4.zAxis().setShowGrid(false);
-  tPlot4.xAxis().setAxisColor(Qt::red);
-  tPlot4.yAxis().setAxisColor(Qt::green);
-  tPlot4.zAxis().setAxisColor(Qt::blue);
+  tPlot4.setShowGrid(false);
+  tPlot4.setShowAxis(false);
   tPlot4.setAzimuth(90);
   tPlot4.setElevation(-90);
   
@@ -206,7 +201,7 @@ int main(int argc, char* argv[]) {
   aWidget->move(700,10);
   aWidget->setFocus();
   aWidget->show();
-
+#endif
   return app.exec();
   
     

@@ -138,16 +138,16 @@ class QAxis: public QObject  {
     Z_AXIS = 2
   };
 
-  void setRange(QRange range) { mRange = range; }
+  void setRange(QRange range);
   void setAxis(Axis axis) { mAxis = axis; }
+  void setAdjustPlaneView(bool value) { mAdjustPlaneView = value; }
   void setShowPlane(bool value) {mShowPlane = value; }
   void setShowGrid(bool value)  {mShowGrid = value; }
   void setShowAxis(bool value)  {mShowAxis = value; }
   void setShowLabel(bool value) {mShowLabel = value; }
-  void setLabel(QString label) { mLabel = label; }
+  void setShowAxisBox(bool value)  {mShowAxisBox = value; }
   void setPlaneColor(QColor color) { mPlaneColor = color; }
   void setGridColor(QColor color) { mGridColor = color; }
-  void setAxisColor(QColor color) { mAxisColor = color; }
   void setLabelColor(QColor color) { mLabelColor = color; }
 
   QRange range() const { return mRange; }
@@ -155,26 +155,37 @@ class QAxis: public QObject  {
   bool   showGrid()  const  {return mShowGrid; }
   bool   showAxis()  const  {return mShowAxis; }
   bool   showLabel()  const  {return mShowLabel; }
-  QString label() const { return mLabel; }
+  QString xLabel() const { return mXLabel; }
+  QString yLabel() const { return mYLabel; }
   QColor planeColor() { return mPlaneColor; }
   QColor gridColor() { return mGridColor; }
-  QColor axisColor() { return mAxisColor; }
   QColor labelColor() { return mLabelColor; }
+
+ public slots:
+  void adjustPlaneView();
 
  protected: 
   void draw() const;
   void setPlot(QPlot3D* plot) { mPlot = plot; }
+  void setXLabel(QString label) { mXLabel = label; }
+  void setYLabel(QString label) { mYLabel = label; }
+
  private:
-  void drawAxis(double minX, double minY, double maxX, double maxY) const;
+  void drawAxisPlane() const;
+  void drawAxis(QVector<double> ticksX, QVector3D min, QVector3D max, QColor color,QVector3D normal) const;
   QVector<double> getTicks(double min, double max) const;
+  void setVisibleTicks(bool lower, bool right, bool upper, bool left);
 
  private:
   QPlot3D* mPlot;
   QRange mRange;
   Axis  mAxis;
-  bool mShowPlane, mShowGrid, mShowAxis, mShowLabel;
-  QString mLabel;
-  QColor mPlaneColor, mGridColor, mAxisColor, mLabelColor;
+  bool mAdjustPlaneView, mShowPlane, mShowGrid, mShowAxis, mShowLabel, mShowAxisBox;
+  QString mXLabel, mYLabel;
+  QColor mPlaneColor, mGridColor, mLabelColor;
+  QVector<double> mXTicks, mYTicks, mZTicks;
+  bool  mShowLowerTicks, mShowUpperTicks, mShowLeftTicks, mShowRightTicks;
+  double mTranslate;
 };
 
 /*!
@@ -225,8 +236,17 @@ class QPlot3D: public QGLWidget {
   double    zoom()  const { return mTranslate.z(); }
   QVector3D pan()   const { return mTranslate;     }
   QColor    background() const { return mBackgroundColor; }
-  double    azimuth() const { return -mRotation.z(); }
-  double    elevation() const { return mRotation.x(); }
+  double    azimuth() const { 
+      double tAzimuth = -mRotation.z();
+      return tAzimuth - floor(tAzimuth/360.0)*360.0;
+  }
+  double    elevation() const { 
+    if (mRotation.x() > 180)
+      return  mRotation.x() - floor(mRotation.x()/90.0)*90.0;
+    if (mRotation.x() < -180)
+      return  mRotation.x() - floor(mRotation.x()/90.0)*90.0;
+    return mRotation.x();
+  }
   QAxis&    xAxis() { return mXAxis; }
   QAxis&    yAxis() { return mYAxis; }
   QAxis&    zAxis() { return mZAxis; }
@@ -242,9 +262,14 @@ class QPlot3D: public QGLWidget {
    void setElevation(double value) { mRotation.setX(value); }
    void setShowLegend(bool value)  { mShowLegend = value; }
    void setAxisEqual(bool value)   { mAxisEqual = value; rescaleAxis();}
-   void hideAxes();
-   void showAxes();
-  
+   void setShowAxis(bool value);
+   void setShowAxisBox(bool value);
+   void setShowGrid(bool value);
+   void setXLabel(QString str) { mXAxis.setXLabel(str); mZAxis.setYLabel(str);}
+   void setYLabel(QString str) { mYAxis.setXLabel(str); mXAxis.setYLabel(str);}
+   void setZLabel(QString str) { mZAxis.setXLabel(str); mYAxis.setYLabel(str);}
+   void setAdjustPlaneView(bool value) { mXAxis.setAdjustPlaneView(value);mYAxis.setAdjustPlaneView(value), mZAxis.setAdjustPlaneView(value);}
+
  private:
    double roll()  const { return mRotation.x();  }
    double pitch() const { return mRotation.y();  }
