@@ -242,50 +242,50 @@ void QAxis::drawAxisPlane() const {
   double minY = mYTicks[0];
   double maxY = mYTicks[mYTicks.size()-1];
 
-  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-  glEnable(GL_POLYGON_OFFSET_FILL);
-  glPolygonOffset(1.0f,1.0f);
+  // glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+  // glEnable(GL_POLYGON_OFFSET_FILL);
+  // glPolygonOffset(1.0f,1.0f);
 
   // Plane
   if(mShowPlane) {
     Draw3DPlane(QVector3D(minX,minY,0), QVector3D(maxX, maxY,0), mPlaneColor);
   }
-  glDisable(GL_POLYGON_OFFSET_FILL);
+  // glDisable(GL_POLYGON_OFFSET_FILL);
 
 
   double deltaX = mXTicks[1] - mXTicks[0];
   double deltaY = mYTicks[1] - mYTicks[0];
 
-  glEnable(GL_POLYGON_OFFSET_LINE);
-  glPolygonOffset(-1.0f,-1.0f);
+  // glEnable(GL_POLYGON_OFFSET_LINE);
+  // glPolygonOffset(-1.0f,-1.0f);
 
   // Grid
   for (int i = 0; i < mXTicks.size(); i++) {
     if(mShowGrid) {      
-      Draw3DLine(QVector3D(mXTicks[i],minY,0), QVector3D(mXTicks[i],maxY,0), 1, mGridColor);
+      mPlot->draw3DLine(QVector3D(mXTicks[i],minY,0), QVector3D(mXTicks[i],maxY,0), 1, mGridColor);
       glColor4f(mLabelColor.redF(),mLabelColor.greenF(),mLabelColor.blueF(),mLabelColor.alphaF());
     }
     if(mShowAxis && mShowLowerTicks) {
-      Draw3DLine(QVector3D(mXTicks[i],minY-0.3*deltaY,0), QVector3D(mXTicks[i],minY,0), 1, mLabelColor);
+      mPlot->draw3DLine(QVector3D(mXTicks[i],minY-0.3*deltaY,0), QVector3D(mXTicks[i],minY,0), 1, mLabelColor);
       mPlot->renderTextAtWorldCoordinates(QVector3D(mXTicks[i],minY-0.5*deltaY,0),QString("%1").arg(mXTicks[i],3,'f',1),10);
     }
     if(mShowAxis && mShowUpperTicks) {
-      Draw3DLine(QVector3D(mXTicks[i],maxY,0), QVector3D(mXTicks[i],maxY+0.3*deltaY,0), 1, mLabelColor);
+      mPlot->draw3DLine(QVector3D(mXTicks[i],maxY,0), QVector3D(mXTicks[i],maxY+0.3*deltaY,0), 2, mLabelColor);
       mPlot->renderTextAtWorldCoordinates(QVector3D(mXTicks[i],maxY+0.5*deltaY,0),QString("%1").arg(mXTicks[i],3,'f',1),10);
     }
   }
 
   for (int i = 1;i < mYTicks.size(); i++) {
     if(mShowGrid) {      
-      Draw3DLine(QVector3D(minX,mYTicks[i],0), QVector3D(maxX,mYTicks[i] ,0), 1, mGridColor);
+      mPlot->draw3DLine(QVector3D(minX,mYTicks[i],0), QVector3D(maxX,mYTicks[i] ,0), 1, mGridColor);
       glColor4f(mLabelColor.redF(),mLabelColor.greenF(),mLabelColor.blueF(),mLabelColor.alphaF());
     }
     if(mShowAxis && mShowLeftTicks)  {
-      Draw3DLine(QVector3D(minX-0.3*deltaX,mYTicks[i],0), QVector3D(minX,mYTicks[i] ,0), 1, mLabelColor);
+      mPlot->draw3DLine(QVector3D(minX-0.3*deltaX,mYTicks[i],0), QVector3D(minX,mYTicks[i] ,0), 2, mLabelColor);
       mPlot->renderTextAtWorldCoordinates(QVector3D(minX-0.5*deltaX,mYTicks[i],0),QString("%1").arg(mYTicks[i],3,'f',1),10);
     }            
     if(mShowAxis && mShowRightTicks) {
-      Draw3DLine(QVector3D(maxX,mYTicks[i],0), QVector3D(maxX+0.3*deltaX,mYTicks[i] ,0), 1, mLabelColor);
+      mPlot->draw3DLine(QVector3D(maxX,mYTicks[i],0), QVector3D(maxX+0.3*deltaX,mYTicks[i] ,0), 2, mLabelColor);
       mPlot->renderTextAtWorldCoordinates(QVector3D(maxX+0.5*deltaX,mYTicks[i],0),QString("%1").arg(mYTicks[i],3,'f',1),10);
     }
   }	 
@@ -299,25 +299,25 @@ void QAxis::drawAxisPlane() const {
 
   if(mShowAxis) {
     if(mShowLowerTicks) {
-      Draw3DLine(QVector3D(minX,minY,0), QVector3D(maxX+0.5*deltaX,minY ,0), 1, mLabelColor);
+      mPlot->draw3DLine(QVector3D(minX,minY,0), QVector3D(maxX+0.5*deltaX,minY ,0), 3, mLabelColor);
       mPlot->renderTextAtWorldCoordinates(QVector3D(0.5*(maxX+minX),minY-1.5*deltaY,0),mXLabel,12);
     }
     if(mShowUpperTicks) {
-      Draw3DLine(QVector3D(minX,maxY,0), QVector3D(maxX+0.5*deltaX,maxY ,0), 1, mLabelColor);
+      mPlot->draw3DLine(QVector3D(minX,maxY,0), QVector3D(maxX+0.5*deltaX,maxY ,0), 3, mLabelColor);
       mPlot->renderTextAtWorldCoordinates(QVector3D(0.5*(maxX+minX),maxY+1.5*deltaY,0),mXLabel,12);
     }
     if(mShowLeftTicks)  {
-      Draw3DLine(QVector3D(minX,minY,0), QVector3D(minX, maxY+0.5*deltaY ,0), 1, mLabelColor);
+      mPlot->draw3DLine(QVector3D(minX,minY,0), QVector3D(minX, maxY+0.5*deltaY ,0), 3, mLabelColor);
       mPlot->renderTextAtWorldCoordinates(QVector3D(minX-1.5*deltaX,0.5*(maxY+minY),0),mYLabel,12);   
     }
     if(mShowRightTicks) {
-      Draw3DLine(QVector3D(maxX,minY,0), QVector3D(maxX, maxY+0.5*deltaY ,0), 1, mLabelColor);
+      mPlot->draw3DLine(QVector3D(maxX,minY,0), QVector3D(maxX, maxY+0.5*deltaY ,0), 3, mLabelColor);
       mPlot->renderTextAtWorldCoordinates(QVector3D(maxX+1.5*deltaX,0.5*(maxY+minY),0),mYLabel,12);   
     }
   }
 
 
-  glDisable(GL_POLYGON_OFFSET_LINE);
+  // glDisable(GL_POLYGON_OFFSET_LINE);
 
 }
 
@@ -346,15 +346,17 @@ void QAxis::draw() const {
 
   if(mShowAxisBox) {
     glTranslatef(0,0,-mTranslate);
-    Draw3DLine(QVector3D(mXTicks[0],mYTicks[0],mZTicks[0]), QVector3D(mXTicks[mXTicks.size()-1],mYTicks[0],mZTicks[0]),1,mLabelColor);
-    Draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[0],mZTicks[0]), QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[0]),1,mLabelColor);
-    Draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[0]), QVector3D(mXTicks[0],mYTicks[mYTicks.size()-1],mZTicks[0]),1,mLabelColor);
-    Draw3DLine(QVector3D(mXTicks[0],mYTicks[mYTicks.size()-1],mZTicks[0]), QVector3D(mXTicks[0],mYTicks[0],mZTicks[0]),1,mLabelColor);
+    mPlot->draw3DLine(QVector3D(mXTicks[0],mYTicks[0],mZTicks[0]), QVector3D(mXTicks[mXTicks.size()-1],mYTicks[0],mZTicks[0]),2,mLabelColor);
+    mPlot->draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[0],mZTicks[0]), QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[0]),2,mLabelColor);
+    mPlot->draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[0]), QVector3D(mXTicks[0],mYTicks[mYTicks.size()-1],mZTicks[0]),2,mLabelColor);
+    mPlot->draw3DLine(QVector3D(mXTicks[0],mYTicks[mYTicks.size()-1],mZTicks[0]), QVector3D(mXTicks[0],mYTicks[0],mZTicks[0]),2,mLabelColor);
     
-    Draw3DLine(QVector3D(mXTicks[0],mYTicks[0],mZTicks[mZTicks.size()-1]), QVector3D(mXTicks[mXTicks.size()-1],mYTicks[0],mZTicks[mZTicks.size()-1]),1,mLabelColor);
-    Draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[0],mZTicks[mZTicks.size()-1]), QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]),1,mLabelColor);
-    Draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]), QVector3D(mXTicks[0],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]),1,mLabelColor);
-    Draw3DLine(QVector3D(mXTicks[0],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]), QVector3D(mXTicks[0],mYTicks[0],mZTicks[mZTicks.size()-1]),1,mLabelColor);
+    mPlot->draw3DLine(QVector3D(mXTicks[0],mYTicks[0],mZTicks[mZTicks.size()-1]), QVector3D(mXTicks[mXTicks.size()-1],mYTicks[0],mZTicks[mZTicks.size()-1]),2,mLabelColor);
+    mPlot->draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[0],mZTicks[mZTicks.size()-1]), QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]),2,mLabelColor);
+    mPlot->draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]), QVector3D(mXTicks[0],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]),2,mLabelColor);
+    mPlot->draw3DLine(QVector3D(mXTicks[0],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]), QVector3D(mXTicks[0],mYTicks[0],mZTicks[mZTicks.size()-1]),2,mLabelColor);
+
+
   }
   glPopMatrix();  
 }
@@ -831,3 +833,58 @@ void QPlot3D::setShowGrid(bool value) {
 }
 
 
+void QPlot3D::draw3DLine(QVector3D from, QVector3D to, double lineWidth, QColor color) {
+  // glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
+  // glEnable(GL_POLYGON_OFFSET_FILL);
+  // glPolygonOffset(1.0f,1.0f);
+
+  QVector3D tFrom = toScreenCoordinates(from);
+  QVector3D tTo   = toScreenCoordinates(to);
+
+  QVector3D v = tTo-tFrom;
+  QVector3D n(v.y(),-v.x(),0);
+  n.normalize();
+
+
+  enable2D();
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+
+  QVector3D v1 = tFrom - 0.5*lineWidth*n;  
+  QVector3D v2 = tFrom;  
+  QVector3D v3 = tTo;  
+  QVector3D v4 = tTo - n*0.5*lineWidth;  
+
+  glBegin(GL_QUADS);
+  glColor4f(color.redF(), color.greenF(), color.blueF(), 0.0);
+  glVertex2f(v1.x(),v1.y());
+  glColor4f(color.redF(), color.greenF(), color.blueF(), 1.0);
+  glVertex2f(v2.x(),v2.y());
+  glColor4f(color.redF(), color.greenF(), color.blueF(), 1.0);
+  glVertex2f(v3.x(), v3.y());
+  glColor4f(color.redF(), color.greenF(), color.blueF(), 0.0);
+  glVertex2f(v4.x(),v4.y());
+
+  v1 = tFrom;
+  v2 = tFrom + n*0.5*lineWidth;   
+  v3 = tTo + n*0.5*lineWidth;  
+  v3 = tTo;  
+
+  glBegin(GL_QUADS);
+  glColor4f(color.redF(), color.greenF(), color.blueF(), 1.0);
+  glVertex2f(v1.x(),v1.y());
+  glColor4f(color.redF(), color.greenF(), color.blueF(), 0.0);
+  glVertex2f(v2.x(),v2.y());
+  glColor4f(color.redF(), color.greenF(), color.blueF(), 0.0);
+  glVertex2f(v3.x(), v3.y());
+  glColor4f(color.redF(), color.greenF(), color.blueF(), 1.0);
+  glVertex2f(v4.x(),v4.y());
+
+  glEnd();
+
+  glDisable(GL_BLEND);
+  disable2D();
+
+  // glDisable(GL_POLYGON_OFFSET_FILL);
+
+}

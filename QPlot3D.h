@@ -278,7 +278,8 @@ class QPlot3D: public QGLWidget {
    void   drawTextBox(int x, int y, QString string);
    void   enable2D();
    void   disable2D();
-
+   void   draw3DLine(QVector3D from, QVector3D to, double lineWidth, QColor color);
+  
  private slots:
    void setRoll(double value)   { mRotation.setX(value);  updateGL(); }
    void setPitch(double value)  { mRotation.setY(value);  updateGL(); }
