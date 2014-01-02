@@ -173,7 +173,8 @@ QAxis::QAxis():
   mShowUpperTicks(false),
   mShowLeftTicks(false),
   mShowRightTicks(false),
-  mTranslate(0.0)
+  mTranslate(0.0),
+  mScale(5.0)
 {
 }
 
@@ -207,13 +208,12 @@ void QAxis::setRange(QRange range) {
 }
 
 QVector<double> QAxis::getTicks(double minValue, double maxValue)  const {
-  static double count = 5.0;
   QVector<double> tTicks;
-  double step  = (maxValue-minValue)/count;
+  double step  = (maxValue-minValue)/mScale;
   double factor = pow(10.0, floor((log(step)/log(10.0))));
 
   double tmp = step/factor;
-  if(tmp < count) {
+  if(tmp < mScale) {
     step = (int)(tmp*2)/2.0*factor;
   } else {
     step = (int)(tmp*0.5)/2.0*factor; 
@@ -281,23 +281,29 @@ void QAxis::drawAxisPlane() const {
     }
   }	 
 
-  if(mShowAxis) {
-    if(mShowLowerTicks) {
-      mPlot->draw3DLine(QVector3D(minX,minY,0), QVector3D(maxX+0.5*deltaX,minY ,0), 3, mLabelColor);
-      mPlot->renderTextAtWorldCoordinates(QVector3D(0.5*(maxX+minX),minY-1.5*deltaY,0),mXLabel,12);
-    }
-    if(mShowUpperTicks) {
-      mPlot->draw3DLine(QVector3D(minX,maxY,0), QVector3D(maxX+0.5*deltaX,maxY ,0), 3, mLabelColor);
-      mPlot->renderTextAtWorldCoordinates(QVector3D(0.5*(maxX+minX),maxY+1.5*deltaY,0),mXLabel,12);
-    }
-    if(mShowLeftTicks)  {
-      mPlot->draw3DLine(QVector3D(minX,minY,0), QVector3D(minX, maxY+0.5*deltaY ,0), 3, mLabelColor);
-      mPlot->renderTextAtWorldCoordinates(QVector3D(minX-1.5*deltaX,0.5*(maxY+minY),0),mYLabel,12);   
-    }
-    if(mShowRightTicks) {
-      mPlot->draw3DLine(QVector3D(maxX,minY,0), QVector3D(maxX, maxY+0.5*deltaY ,0), 3, mLabelColor);
-      mPlot->renderTextAtWorldCoordinates(QVector3D(maxX+1.5*deltaX,0.5*(maxY+minY),0),mYLabel,12);   
-    }
+  if(mShowAxis &&  mShowLowerTicks) {
+    mPlot->draw3DLine(QVector3D(minX,minY,0), QVector3D(maxX+0.5*deltaX,minY ,0), 3, mLabelColor);
+  }
+  if(mShowLabel && mShowLowerTicks) {
+    mPlot->renderTextAtWorldCoordinates(QVector3D(0.5*(maxX+minX),minY-1.5*deltaY,0),mXLabel,12);
+  }
+  if(mShowAxis && mShowUpperTicks) {
+    mPlot->draw3DLine(QVector3D(minX,maxY,0), QVector3D(maxX+0.5*deltaX,maxY ,0), 3, mLabelColor);
+  }
+  if(mShowLabel && mShowUpperTicks) {
+    mPlot->renderTextAtWorldCoordinates(QVector3D(0.5*(maxX+minX),maxY+1.5*deltaY,0),mXLabel,12);
+  }
+  if(mShowAxis && mShowLeftTicks)  {
+    mPlot->draw3DLine(QVector3D(minX,minY,0), QVector3D(minX, maxY+0.5*deltaY ,0), 3, mLabelColor);
+  }
+  if(mShowLabel && mShowLeftTicks) {    
+    mPlot->renderTextAtWorldCoordinates(QVector3D(minX-1.5*deltaX,0.5*(maxY+minY),0),mYLabel,12);   
+  }
+  if(mShowAxis && mShowRightTicks) {
+    mPlot->draw3DLine(QVector3D(maxX,minY,0), QVector3D(maxX, maxY+0.5*deltaY ,0), 3, mLabelColor);
+  }
+  if(mShowLabel && mShowRightTicks) {
+    mPlot->renderTextAtWorldCoordinates(QVector3D(maxX+1.5*deltaX,0.5*(maxY+minY),0),mYLabel,12);   
   }
 
 
@@ -501,15 +507,69 @@ QPlot3D::QPlot3D(QWidget* parent):
   setZLabel("Z");
 
   setFont(QFont("Helvetica"));
+
+
+  setContextMenuPolicy(Qt::CustomContextMenu);
+  connect(this, SIGNAL(customContextMenuRequested(const QPoint&)), this, SLOT(showContextMenu(const QPoint&)));
+  
+
 }
 
 QPlot3D::~QPlot3D() {
 }
 
+void QPlot3D::showContextMenu(const QPoint& pos) {
+  QPoint globalPos = this->mapToGlobal(pos);
+  
+  QMenu tMenu;
+
+  QAction*  a1 = new QAction("Toggle Plane",this);
+  connect(a1, SIGNAL(triggered()), &mXAxis,SLOT(togglePlane()));
+  connect(a1, SIGNAL(triggered()), &mYAxis,SLOT(togglePlane()));
+  connect(a1, SIGNAL(triggered()), &mZAxis,SLOT(togglePlane()));
+  tMenu.addAction(a1);
+
+  QAction*  a2 = new QAction("Toggle Grid",this);
+  connect(a2, SIGNAL(triggered()), &mXAxis,SLOT(toggleGrid()));
+  connect(a2, SIGNAL(triggered()), &mYAxis,SLOT(toggleGrid()));
+  connect(a2, SIGNAL(triggered()), &mZAxis,SLOT(toggleGrid()));
+  tMenu.addAction(a2);
+
+  QAction*  a3 = new QAction("Toggle Axis",this);
+  connect(a3, SIGNAL(triggered()), &mXAxis,SLOT(toggleAxis()));
+  connect(a3, SIGNAL(triggered()), &mYAxis,SLOT(toggleAxis()));
+  connect(a3, SIGNAL(triggered()), &mZAxis,SLOT(toggleAxis()));
+  tMenu.addAction(a3);
+
+  QAction*  a4 = new QAction("Toggle Label",this);
+  connect(a4, SIGNAL(triggered()), &mXAxis,SLOT(toggleLabel()));
+  connect(a4, SIGNAL(triggered()), &mYAxis,SLOT(toggleLabel()));
+  connect(a4, SIGNAL(triggered()), &mZAxis,SLOT(toggleLabel()));
+  tMenu.addAction(a4);
+
+  QAction*  a5 = new QAction("Toggle Axis Box",this);
+  connect(a5, SIGNAL(triggered()), &mXAxis,SLOT(toggleAxisBox()));
+  connect(a5, SIGNAL(triggered()), &mYAxis,SLOT(toggleAxisBox()));
+  connect(a5, SIGNAL(triggered()), &mZAxis,SLOT(toggleAxisBox()));
+  tMenu.addAction(a5);
+
+  QAction*  a6 = new QAction("Toggle Adjust Plane View",this);
+  connect(a6, SIGNAL(triggered()), &mXAxis,SLOT(toggleAdjustView()));
+  connect(a6, SIGNAL(triggered()), &mYAxis,SLOT(toggleAdjustView()));
+  connect(a6, SIGNAL(triggered()), &mZAxis,SLOT(toggleAdjustView()));
+  tMenu.addAction(a6);
+
+  QAction*  a7 = new QAction("Toggle Axis Equal",this);
+  connect(a7, SIGNAL(triggered()), this,SLOT(toggleAxisEqual()));
+  tMenu.addAction(a7);
+
+  tMenu.exec(globalPos);
+  update();
+}
+
 void QPlot3D::initializeGL() {
   qglClearColor(mBackgroundColor);
     
-  // glEnable(GL_DEPTH_TEST);
   glShadeModel(GL_SMOOTH);
 
   glEnable(GL_MULTISAMPLE);
@@ -636,16 +696,14 @@ void QPlot3D::enable2D() {
   
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(0,width(),height(),0,0.1,-10000.0);
+  glOrtho(0,width(),height(),0,0.01,-10000.0);
   
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   
-  // glDisable(GL_DEPTH_TEST);
 }
 
 void QPlot3D::disable2D() {
-  // glEnable(GL_DEPTH_TEST);
   glPopMatrix();
   resizeGL(width(),height());
 }
@@ -669,6 +727,8 @@ void QPlot3D::resizeGL(int width, int height) {
 void QPlot3D::mousePressEvent(QMouseEvent *event)
 {
     mLastMousePos = event->pos();
+
+
 }
 
 void QPlot3D::mouseMoveEvent(QMouseEvent *event)
@@ -685,9 +745,10 @@ void QPlot3D::mouseMoveEvent(QMouseEvent *event)
 	setRoll(roll() + dy);
       setYaw(yaw() + dx);
     }
-  } else if (event->buttons() & Qt::RightButton) {
+  } else {
     setPan(pan() + QVector3D(dx/32.0,-dy/32.0,0.0));
   }
+ 
   mLastMousePos = event->pos();
 
   mXAxis.adjustPlaneView();

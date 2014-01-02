@@ -164,13 +164,21 @@ class QAxis: public QObject  {
  public slots:
   void adjustPlaneView();
 
+  void togglePlane() {mShowPlane = !mShowPlane; }
+  void toggleGrid()  {mShowGrid = !mShowGrid; }
+  void toggleAxis()  {mShowAxis = !mShowAxis; }
+  void toggleLabel() {mShowLabel = !mShowLabel; }
+  void toggleAxisBox()  {mShowAxisBox = !mShowAxisBox; }
+  void toggleAdjustView()  {mAdjustPlaneView = !mAdjustPlaneView; }
+
  protected: 
   void draw() const;
   void drawAxisBox() const;
   void setPlot(QPlot3D* plot) { mPlot = plot; }
   void setXLabel(QString label) { mXLabel = label; }
   void setYLabel(QString label) { mYLabel = label; }
-
+  double mScale;
+  
  private:
   void drawAxisPlane() const;
   void drawAxis(QVector<double> ticksX, QVector3D min, QVector3D max, QColor color,QVector3D normal) const;
@@ -270,6 +278,8 @@ class QPlot3D: public QGLWidget {
    void setYLabel(QString str) { mYAxis.setXLabel(str); mXAxis.setYLabel(str);}
    void setZLabel(QString str) { mZAxis.setXLabel(str); mYAxis.setYLabel(str);}
    void setAdjustPlaneView(bool value) { mXAxis.setAdjustPlaneView(value);mYAxis.setAdjustPlaneView(value), mZAxis.setAdjustPlaneView(value);}
+   void showContextMenu(const QPoint&);
+   void toggleAxisEqual() {setAxisEqual(!mAxisEqual);}
 
  private:
    double roll()  const { return mRotation.x();  }
@@ -280,7 +290,7 @@ class QPlot3D: public QGLWidget {
    void   enable2D();
    void   disable2D();
    void   draw3DLine(QVector3D from, QVector3D to, double lineWidth, QColor color);
-  
+
  private slots:
    void setRoll(double value)   { mRotation.setX(value);  updateGL(); }
    void setPitch(double value)  { mRotation.setY(value);  updateGL(); }
@@ -288,7 +298,7 @@ class QPlot3D: public QGLWidget {
    void rescaleAxis();
    void axisEqual();
    void axisTight();
-
+   
  protected:
   void initializeGL();
   void paintGL();
