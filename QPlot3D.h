@@ -166,6 +166,7 @@ class QAxis: public QObject  {
 
  protected: 
   void draw() const;
+  void drawAxisBox() const;
   void setPlot(QPlot3D* plot) { mPlot = plot; }
   void setXLabel(QString label) { mXLabel = label; }
   void setYLabel(QString label) { mYLabel = label; }

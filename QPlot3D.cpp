@@ -20,23 +20,25 @@
 #include <limits>
 
 static void Draw3DPlane(QVector3D topLeft, QVector3D bottomRight, QColor color) {
-    glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-    glBegin(GL_QUADS);
-    glVertex3f(topLeft.x(),    topLeft.y(),    topLeft.z());
-    glVertex3f(bottomRight.x(),topLeft.y(),    bottomRight.z());
-    glVertex3f(bottomRight.x(),bottomRight.y(),bottomRight.z());
-    glVertex3f(topLeft.x(),    bottomRight.y(),topLeft.z());
-    glEnd();
+  QVector3D normal = QVector3D::crossProduct(topLeft,bottomRight);
+  glNormal3f(normal.x(),normal.y(),normal.z());
+  glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+  glBegin(GL_QUADS);
+  glVertex3f(topLeft.x(),    topLeft.y(),    topLeft.z());
+  glVertex3f(bottomRight.x(),topLeft.y(),    bottomRight.z());
+  glVertex3f(bottomRight.x(),bottomRight.y(),bottomRight.z());
+  glVertex3f(topLeft.x(),    bottomRight.y(),topLeft.z());
+  glEnd();
 }
 
 static void Draw2DPlane(QVector2D topLeft, QVector2D bottomRight, QColor color) {
-    glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
-    glBegin(GL_QUADS);
-    glVertex2f(topLeft.x(),    topLeft.y());
-    glVertex2f(bottomRight.x(),topLeft.y());
-    glVertex2f(bottomRight.x(),bottomRight.y());
-    glVertex2f(topLeft.x(),    bottomRight.y());
-    glEnd();
+  glColor4f(color.redF(), color.greenF(), color.blueF(), color.alphaF());
+  glBegin(GL_QUADS);
+  glVertex2f(topLeft.x(),    topLeft.y());
+  glVertex2f(bottomRight.x(),topLeft.y());
+  glVertex2f(bottomRight.x(),bottomRight.y());
+  glVertex2f(topLeft.x(),    bottomRight.y());
+  glEnd();
 }
 
 
@@ -306,6 +308,7 @@ void QAxis::drawAxisPlane() const {
 void QAxis::draw() const {
   if(mXTicks.isEmpty()) return;
   if(mYTicks.isEmpty()) return;
+  if(mZTicks.isEmpty()) return;
 
   glPushMatrix();
   
@@ -326,8 +329,32 @@ void QAxis::draw() const {
   glTranslatef(0,0,mTranslate);
   drawAxisPlane();
 
+  glPopMatrix();
+} 
+void QAxis::drawAxisBox() const {
+  if(mXTicks.isEmpty()) return;
+  if(mYTicks.isEmpty()) return;
+  if(mZTicks.isEmpty()) return;
+
+  glPushMatrix();
+
+
   if(mShowAxisBox) {
-    glTranslatef(0,0,-mTranslate);
+  if(mAxis == X_AXIS) 
+    {
+    }
+  else if (mAxis == Y_AXIS) 
+    {
+      glRotatef(90, 1,0,0);
+      glRotatef(90, 0,1,0);    
+    }
+  else {
+    glRotatef(90,  1,0,0);
+    glRotatef(180, 0,1,0);        
+    glRotatef(90,  0,0,1);
+  }
+
+    // glTranslatef(0,0,-mTranslate);
     mPlot->draw3DLine(QVector3D(mXTicks[0],mYTicks[0],mZTicks[0]), QVector3D(mXTicks[mXTicks.size()-1],mYTicks[0],mZTicks[0]),2,mLabelColor);
     mPlot->draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[0],mZTicks[0]), QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[0]),2,mLabelColor);
     mPlot->draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[0]), QVector3D(mXTicks[0],mYTicks[mYTicks.size()-1],mZTicks[0]),2,mLabelColor);
@@ -337,8 +364,6 @@ void QAxis::draw() const {
     mPlot->draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[0],mZTicks[mZTicks.size()-1]), QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]),2,mLabelColor);
     mPlot->draw3DLine(QVector3D(mXTicks[mXTicks.size()-1],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]), QVector3D(mXTicks[0],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]),2,mLabelColor);
     mPlot->draw3DLine(QVector3D(mXTicks[0],mYTicks[mYTicks.size()-1],mZTicks[mZTicks.size()-1]), QVector3D(mXTicks[0],mYTicks[0],mZTicks[mZTicks.size()-1]),2,mLabelColor);
-
-
   }
   glPopMatrix();  
 }
@@ -484,15 +509,14 @@ QPlot3D::~QPlot3D() {
 void QPlot3D::initializeGL() {
   qglClearColor(mBackgroundColor);
     
-  glEnable(GL_DEPTH_TEST);
+  // glEnable(GL_DEPTH_TEST);
   glShadeModel(GL_SMOOTH);
 
   glEnable(GL_MULTISAMPLE);
   
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-
-
+  
 }
 
 void QPlot3D::paintGL() {
@@ -520,6 +544,11 @@ void QPlot3D::paintGL() {
   for(int i = 0; i < nCurves; i++) {
     mCurves[i]->draw();
   }
+
+  // DRAW AXIS BOX
+  mXAxis.drawAxisBox();
+  mYAxis.drawAxisBox();
+  mZAxis.drawAxisBox();
 
   // DRAW LEGEND
   if(mShowLegend) {
@@ -551,6 +580,7 @@ void QPlot3D::drawLegend(){
   double y0 = 5;
 
   enable2D();
+  glEnable(GL_BLEND);
   // Draw box
   Draw2DPlane(QVector2D(x0,y0),             QVector2D(x0+tWidth,y0+tHeight),QColor(204,204,217,128));
   // Draw contour lines
@@ -558,6 +588,7 @@ void QPlot3D::drawLegend(){
   Draw2DLine(QVector2D(x0+tWidth,y0),         QVector2D(x0+tWidth,y0+tHeight), 1, QColor(0,0,0,255));
   Draw2DLine(QVector2D(x0+tWidth,y0+tHeight), QVector2D(x0,y0+tHeight),        1, QColor(0,0,0,255));
   Draw2DLine(QVector2D(x0,y0+tHeight),        QVector2D(x0,y0),                1, QColor(0,0,0,255));  
+  glDisable(GL_BLEND);
   disable2D();
 
   y0 = 10;
@@ -605,16 +636,16 @@ void QPlot3D::enable2D() {
   
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
-  glOrtho(0,width(),height(),0,0,1);
+  glOrtho(0,width(),height(),0,0.1,-10000.0);
   
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   
-  glDisable(GL_DEPTH_TEST);
+  // glDisable(GL_DEPTH_TEST);
 }
 
 void QPlot3D::disable2D() {
-  glEnable(GL_DEPTH_TEST);
+  // glEnable(GL_DEPTH_TEST);
   glPopMatrix();
   resizeGL(width(),height());
 }
@@ -625,11 +656,12 @@ void QPlot3D::resizeGL(int width, int height) {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   double zNear = 0.01;
-  double zFar  = 1000.0;
+  double zFar  = 10000.0;
   double aspect = (double)width/(double)height;
   double fW = tan( 25*3.141592/180.0)*zNear;
   double fH = fW/aspect;
   glFrustum(-fW,fW,-fH,fH,zNear,zFar);
+
 
   glMatrixMode(GL_MODELVIEW);
 }
@@ -783,8 +815,8 @@ QVector3D QPlot3D::toScreenCoordinates(const QVector3D& vec) {
   g3 /= g4;
        
   return QVector3D( (g1*0.5+0.5)*viewPort[2] + viewPort[0], 
-		    height()- ((g2*0.5+0.5)*viewPort[3] + viewPort[1]),
-		    (1.0+g3)*0.5);
+  		    height()- ((g2*0.5+0.5)*viewPort[3] + viewPort[1]),
+  		    (1.0+g3)*0.5);
   
 }
 
@@ -818,19 +850,16 @@ void QPlot3D::setShowGrid(bool value) {
 
 
 void QPlot3D::draw3DLine(QVector3D from, QVector3D to, double lineWidth, QColor color) {
-  // glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
-  // glEnable(GL_POLYGON_OFFSET_FILL);
-  // glPolygonOffset(-1.0f,-1.0f);
 
   const QVector3D tFrom = toScreenCoordinates(from);
   const QVector3D tTo   = toScreenCoordinates(to);
 
   const QVector3D v = tTo-tFrom;
-  QVector3D n(v.y(),-v.x(),0);
-  n.normalize();
+  const QVector3D n1 = QVector3D::crossProduct(tTo,tFrom);
+  const QVector3D n = QVector3D::crossProduct(v,n1).normalized();
 
-
-  enable2D();
+  enable2D();  // Actually, set glOrtho...
+  // glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 
@@ -843,12 +872,12 @@ void QPlot3D::draw3DLine(QVector3D from, QVector3D to, double lineWidth, QColor 
   const QVector3D v6 = tTo   + d;
 
   float vertexVec[] = { 
-    v1.x(),v1.y(),
-    v2.x(),v2.y(),
-    v3.x(),v3.y(),
-    v4.x(),v4.y(),
-    v5.x(),v5.y(),
-    v6.x(),v6.y()
+    v1.x(),v1.y(),v1.z(),
+    v2.x(),v2.y(),v2.z(),
+    v3.x(),v3.y(),v3.z(),
+    v4.x(),v4.y(),v4.z(),
+    v5.x(),v5.y(),v5.z(),
+    v6.x(),v6.y(),v6.z()
   };
 
   float colorVec[] = { 
@@ -860,7 +889,7 @@ void QPlot3D::draw3DLine(QVector3D from, QVector3D to, double lineWidth, QColor 
     color.redF(), color.greenF(), color.blueF(), 0.0,
   };
 
-  glVertexPointer(2,GL_FLOAT, 0, vertexVec);
+  glVertexPointer(3,GL_FLOAT, 0, vertexVec);
   glColorPointer(4,GL_FLOAT, 0, colorVec);
   glEnableClientState(GL_VERTEX_ARRAY);    
   glEnableClientState(GL_COLOR_ARRAY);    
