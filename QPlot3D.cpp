@@ -174,7 +174,10 @@ QAxis::QAxis():
   mShowLeftTicks(false),
   mShowRightTicks(false),
   mTranslate(0.0),
-  mScale(5.0)
+  mScale(5.0),
+  mLabelFont("Helvetica",12),
+  mTicksFont("Helvetica",10)
+  
 {
 }
 
@@ -229,6 +232,30 @@ QVector<double> QAxis::getTicks(double minValue, double maxValue)  const {
   
 }
 
+void QAxis::drawXTickLabel( QVector3D start, QVector3D stop, QString string ) const {
+  
+  QRect textSize = mPlot->textSize(string);
+
+  const QVector3D tmpStart = mPlot->toScreenCoordinates(start.x(),start.y(),0.0);
+  const QVector3D tmpStop  = mPlot->toScreenCoordinates(stop.x(),stop.y(),0.0);
+  const QVector2D tStart(tmpStart.x(),tmpStart.y());
+  const QVector2D tStop(tmpStop.x(),tmpStop.y());
+
+  
+  QVector2D r = tStop-tStart;
+  QVector2D v = tStop;
+  if(r.x() < 0) {
+      v-QVector2D(textSize.width(),0.0);
+    v += QVector2D(-textSize.width(),0.5*textSize.height());     
+  } else 
+    {
+      v += QVector2D(0,0.5*textSize.height());     
+    }
+
+  glColor4f(mLabelColor.redF(),mLabelColor.greenF(),mLabelColor.blueF(),mLabelColor.alphaF());
+  mPlot->renderTextAtScreenCoordinates(v.x(),v.y(),string,mTicksFont);  
+}
+
 void QAxis::drawAxisPlane() const {
   
   double minX = mXTicks[0];
@@ -254,14 +281,12 @@ void QAxis::drawAxisPlane() const {
       mPlot->draw3DLine(QVector3D(mXTicks[i],minY,0), QVector3D(mXTicks[i],maxY,0), 2, mGridColor);
     }
     if(mShowAxis && mShowLowerTicks) {
-      mPlot->draw3DLine(QVector3D(mXTicks[i],minY-0.2*deltaY,0), QVector3D(mXTicks[i],minY,0), 2, mLabelColor);
-      glColor4f(mLabelColor.redF(),mLabelColor.greenF(),mLabelColor.blueF(),mLabelColor.alphaF());
-      mPlot->renderTextAtWorldCoordinates(QVector3D(mXTicks[i],minY-0.5*deltaY,0),QString("%1").arg(mXTicks[i],3,'f',1),10);
+      mPlot->draw3DLine(QVector3D(mXTicks[i],minY,0), QVector3D(mXTicks[i],minY-0.2*deltaY,0), 2, mLabelColor);
+      drawXTickLabel(QVector3D(mXTicks[i],minY,0),    QVector3D(mXTicks[i],minY-0.5*deltaY,0), QString("%1").arg(mXTicks[i],3,'f',1));
     }
     if(mShowAxis && mShowUpperTicks) {
       mPlot->draw3DLine(QVector3D(mXTicks[i],maxY,0), QVector3D(mXTicks[i],maxY+0.2*deltaY,0), 2, mLabelColor);
-      glColor4f(mLabelColor.redF(),mLabelColor.greenF(),mLabelColor.blueF(),mLabelColor.alphaF());
-      mPlot->renderTextAtWorldCoordinates(QVector3D(mXTicks[i],maxY+0.5*deltaY,0),QString("%1").arg(mXTicks[i],3,'f',1),10);
+      drawXTickLabel(QVector3D(mXTicks[i],maxY,0),    QVector3D(mXTicks[i],maxY+0.5*deltaY,0), QString("%1").arg(mXTicks[i],3,'f',1));
     }
   }
 
@@ -270,14 +295,12 @@ void QAxis::drawAxisPlane() const {
       mPlot->draw3DLine(QVector3D(minX,mYTicks[i],0), QVector3D(maxX,mYTicks[i] ,0), 2, mGridColor);
     }
     if(mShowAxis && mShowLeftTicks)  {
-      mPlot->draw3DLine(QVector3D(minX-0.2*deltaX,mYTicks[i],0), QVector3D(minX,mYTicks[i] ,0), 2, mLabelColor);
-      glColor4f(mLabelColor.redF(),mLabelColor.greenF(),mLabelColor.blueF(),mLabelColor.alphaF());
-      mPlot->renderTextAtWorldCoordinates(QVector3D(minX-0.5*deltaX,mYTicks[i],0),QString("%1").arg(mYTicks[i],3,'f',1),10);
+      mPlot->draw3DLine(QVector3D(minX,mYTicks[i],0), QVector3D(minX-0.2*deltaX,mYTicks[i] ,0), 2, mLabelColor);
+      drawXTickLabel(QVector3D(minX,mYTicks[i],0), QVector3D(minX-0.5*deltaX,mYTicks[i] ,0), QString("%1").arg(mYTicks[i],3,'f',1));
     }            
     if(mShowAxis && mShowRightTicks) {
       mPlot->draw3DLine(QVector3D(maxX,mYTicks[i],0), QVector3D(maxX+0.2*deltaX,mYTicks[i] ,0), 2, mLabelColor);
-      glColor4f(mLabelColor.redF(),mLabelColor.greenF(),mLabelColor.blueF(),mLabelColor.alphaF());
-      mPlot->renderTextAtWorldCoordinates(QVector3D(maxX+0.5*deltaX,mYTicks[i],0),QString("%1").arg(mYTicks[i],3,'f',1),10);
+      drawXTickLabel(QVector3D(maxX, mYTicks[i],0.0), QVector3D(maxX+0.5*deltaX,mYTicks[i], 0),QString("%1").arg(mYTicks[i],3,'f',1));
     }
   }	 
 
@@ -285,25 +308,25 @@ void QAxis::drawAxisPlane() const {
     mPlot->draw3DLine(QVector3D(minX,minY,0), QVector3D(maxX+0.5*deltaX,minY ,0), 3, mLabelColor);
   }
   if(mShowLabel && mShowLowerTicks) {
-    mPlot->renderTextAtWorldCoordinates(QVector3D(0.5*(maxX+minX),minY-1.5*deltaY,0),mXLabel,12);
+    mPlot->renderTextAtWorldCoordinates(QVector3D(0.5*(maxX+minX),minY-1.5*deltaY,0),mXLabel,mLabelFont);
   }
   if(mShowAxis && mShowUpperTicks) {
     mPlot->draw3DLine(QVector3D(minX,maxY,0), QVector3D(maxX+0.5*deltaX,maxY ,0), 3, mLabelColor);
   }
   if(mShowLabel && mShowUpperTicks) {
-    mPlot->renderTextAtWorldCoordinates(QVector3D(0.5*(maxX+minX),maxY+1.5*deltaY,0),mXLabel,12);
+    mPlot->renderTextAtWorldCoordinates(QVector3D(0.5*(maxX+minX),maxY+1.5*deltaY,0),mXLabel,mLabelFont);
   }
   if(mShowAxis && mShowLeftTicks)  {
     mPlot->draw3DLine(QVector3D(minX,minY,0), QVector3D(minX, maxY+0.5*deltaY ,0), 3, mLabelColor);
   }
   if(mShowLabel && mShowLeftTicks) {    
-    mPlot->renderTextAtWorldCoordinates(QVector3D(minX-1.5*deltaX,0.5*(maxY+minY),0),mYLabel,12);   
+    mPlot->renderTextAtWorldCoordinates(QVector3D(minX-1.5*deltaX,0.5*(maxY+minY),0),mYLabel,mLabelFont);   
   }
   if(mShowAxis && mShowRightTicks) {
     mPlot->draw3DLine(QVector3D(maxX,minY,0), QVector3D(maxX, maxY+0.5*deltaY ,0), 3, mLabelColor);
   }
   if(mShowLabel && mShowRightTicks) {
-    mPlot->renderTextAtWorldCoordinates(QVector3D(maxX+1.5*deltaX,0.5*(maxY+minY),0),mYLabel,12);   
+    mPlot->renderTextAtWorldCoordinates(QVector3D(maxX+1.5*deltaX,0.5*(maxY+minY),0),mYLabel,mLabelFont);   
   }
 
 
@@ -488,8 +511,10 @@ QPlot3D::QPlot3D(QWidget* parent):
   mRotation(0,0,0),  
   mShowAzimuthElevation(true),
   mShowLegend(true),
-  mAxisEqual(false)
+  mAxisEqual(false),
+  mLegendFont("Helvetica", 12)
 {
+
 
   setAzimuth(130);
   setElevation(30);
@@ -667,13 +692,13 @@ void QPlot3D::drawLegend(){
     x0 += 30;
     glColor4f(0,0,0,1);
     y0 += textHeight;
-    renderText((int)x0,(int)y0,mCurves[i]->name());
+    renderTextAtScreenCoordinates((int)x0,(int)y0,mCurves[i]->name(),mLegendFont);
   }
 
 
 }
 
-void QPlot3D::drawTextBox(int x, int y, QString string)  {
+void QPlot3D::drawTextBox(int x, int y, QString string, QFont font)  {
   const double textWidth  = fontMetrics().width(string);
   const double textHeight = fontMetrics().height();
 
@@ -683,11 +708,8 @@ void QPlot3D::drawTextBox(int x, int y, QString string)  {
   disable2D();
   glDisable(GL_BLEND);
 
-  QFont tFont  = font();
-  tFont.setPixelSize(10);
-  setFont(tFont);
   glColor4f(0,0,0,1);
-  renderText(x,y,string);
+  renderTextAtScreenCoordinates(x,y,string,font);
 }  
 
 
@@ -836,15 +858,20 @@ QVector3D QPlot3D::cameraPositionInWorldCoordinates() const {
   return tObjectCenter + q.rotatedVector(-QVector3D(mTranslate.x()/mScale.x(),mTranslate.y()/mScale.y(),mTranslate.z()/mScale.z()));
 }
 
-void QPlot3D::renderTextAtWorldCoordinates(const QVector3D& vec, QString str, int fontSize) {
-  QFont tFont  = font();
-  tFont.setPixelSize(fontSize);
-  setFont(tFont);
+void QPlot3D::renderTextAtWorldCoordinates(const QVector3D& vec, QString str, QFont font) {
   QVector3D sVec = toScreenCoordinates(vec);
-  renderText(sVec.x(),sVec.y(),str);  
+  renderTextAtScreenCoordinates(sVec.x(),sVec.y(),str,font);  
 }
 
-QVector3D QPlot3D::toScreenCoordinates(const QVector3D& vec) {
+void QPlot3D::renderTextAtScreenCoordinates(int x, int y, QString str, QFont font) {
+  setFont(font);
+  renderText(x,y,str);  
+}
+QVector3D QPlot3D::toScreenCoordinates(double worldX, double worldY, double worldZ) const {
+  return toScreenCoordinates(QVector3D(worldX,worldY,worldZ));
+}
+
+QVector3D QPlot3D::toScreenCoordinates(const QVector3D& vec) const {
   // v' = P*M*v
   GLdouble m[16];
   GLdouble p[16];
@@ -962,4 +989,12 @@ void QPlot3D::draw3DLine(QVector3D from, QVector3D to, double lineWidth, QColor 
   glDisable(GL_BLEND);
   disable2D();
 
+}
+
+QRect QPlot3D::textSize(QString string) const {
+  return QRect(0.0, 0.0, fontMetrics().width(string), fontMetrics().height());
+}
+
+bool QPlot3D::removeCurve(QCurve3D* curve) {
+  return mCurves.removeOne(curve);
 }

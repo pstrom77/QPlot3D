@@ -78,7 +78,6 @@ private:
   QCurve3D* mCurve;
 };
 
-
 int main(int argc, char* argv[]) {
 
   QApplication app(argc,argv);
@@ -117,6 +116,7 @@ int main(int argc, char* argv[]) {
   plot.move(10,10);
   plot.setFocus();
   plot.show();
+
 #if 1
   //////////////////////////////////////////////////////////////////////  
   // Example 2: A Spiral way of from origin...
@@ -146,13 +146,13 @@ int main(int argc, char* argv[]) {
   // Example 3: Changeing the  looks
   //////////////////////////////////////////////////////////////////////  
   // Setup a widget with four subplots...
-  QWidget* aWidget = new QWidget();
+  QWidget aWidget;
   QPlot3D tPlot1;
   QPlot3D tPlot2;
   QPlot3D tPlot3;
   QPlot3D tPlot4;
   QGridLayout* tLayout = new QGridLayout;
-  aWidget->setLayout(tLayout);
+  aWidget.setLayout(tLayout);
   tLayout->addWidget(&tPlot1,0,0);
   tLayout->addWidget(&tPlot2,0,1);
   tLayout->addWidget(&tPlot3,1,0);
@@ -197,10 +197,36 @@ int main(int argc, char* argv[]) {
 
 
   // Window logistics...
-  aWidget->resize(600,600);
-  aWidget->move(700,10);
-  aWidget->setFocus();
-  aWidget->show();
+  aWidget.resize(600,600);
+  aWidget.move(700,10);
+  aWidget.setFocus();
+  aWidget.show();
+
+
+  //////////////////////////////////////////////////////////////////////
+  // Example 4: Create and Remove plots
+  //////////////////////////////////////////////////////////////////////
+  QPlot3D plot4;
+  plot4.resize(300,300);
+  plot4.move(350,410);
+  plot4.raise();
+  plot4.show();
+
+  QCurve3D curve1("Curve 1");
+  curve1.addData(0,0,0);
+  curve1.addData(1,1,1);
+  plot4.addCurve(&curve1);
+  QThread::sleep(1);
+
+  QCurve3D curve2("Curve 2");
+  curve2.addData(0,0,0);
+  curve2.addData(-1,-1,0);
+  plot4.addCurve(&curve2);
+  QThread::sleep(1);
+
+  plot4.removeCurve(&curve1);
+
+
 #endif
   return app.exec();
   

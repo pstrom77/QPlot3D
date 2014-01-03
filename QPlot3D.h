@@ -149,6 +149,8 @@ class QAxis: public QObject  {
   void setPlaneColor(QColor color) { mPlaneColor = color; }
   void setGridColor(QColor color) { mGridColor = color; }
   void setLabelColor(QColor color) { mLabelColor = color; }
+  void setLabelFont(QFont font) { mLabelFont = font; }
+  void setTicksFont(QFont font) { mTicksFont = font; }
 
   QRange range() const { return mRange; }
   bool   showPlane() const  {return mShowPlane; }
@@ -157,9 +159,11 @@ class QAxis: public QObject  {
   bool   showLabel()  const  {return mShowLabel; }
   QString xLabel() const { return mXLabel; }
   QString yLabel() const { return mYLabel; }
-  QColor planeColor() { return mPlaneColor; }
-  QColor gridColor() { return mGridColor; }
-  QColor labelColor() { return mLabelColor; }
+  QColor planeColor() const { return mPlaneColor; }
+  QColor gridColor() const { return mGridColor; }
+  QColor labelColor() const { return mLabelColor; }
+  QFont labelFont() const { return mLabelFont; }
+  QFont ticksFont() const { return mTicksFont; }
 
  public slots:
   void adjustPlaneView();
@@ -184,6 +188,7 @@ class QAxis: public QObject  {
   void drawAxis(QVector<double> ticksX, QVector3D min, QVector3D max, QColor color,QVector3D normal) const;
   QVector<double> getTicks(double min, double max) const;
   void setVisibleTicks(bool lower, bool right, bool upper, bool left);
+  void drawXTickLabel( QVector3D start, QVector3D stop, QString string ) const;
 
  private:
   QPlot3D* mPlot;
@@ -195,6 +200,7 @@ class QAxis: public QObject  {
   QVector<double> mXTicks, mYTicks, mZTicks;
   bool  mShowLowerTicks, mShowUpperTicks, mShowLeftTicks, mShowRightTicks;
   double mTranslate;
+  QFont mLabelFont, mTicksFont;
 };
 
 /*!
@@ -239,9 +245,12 @@ class QPlot3D: public QGLWidget {
   ~QPlot3D();
 
   void addCurve(QCurve3D* curve);
+  bool removeCurve(QCurve3D* curve);
   void clear() { mCurves.clear(); }
   void setBackgroundColor(QColor color);
-
+  void setLegendFont(QFont font) { mLegendFont = font; }
+  QFont legendFont() const { return mLegendFont; }
+    
   double    zoom()  const { return mTranslate.z(); }
   QVector3D pan()   const { return mTranslate;     }
   QColor    background() const { return mBackgroundColor; }
@@ -259,12 +268,11 @@ class QPlot3D: public QGLWidget {
   QAxis&    xAxis() { return mXAxis; }
   QAxis&    yAxis() { return mYAxis; }
   QAxis&    zAxis() { return mZAxis; }
-  QVector3D toScreenCoordinates(const QVector3D& worldCoord);
-  void      renderTextAtWorldCoordinates(const QVector3D& vec, QString string, int fontSize = 12);
-  QVector3D cameraPositionInWorldCoordinates() const;
+
+
 
  public slots:
-   void setZoom(double value)   { mTranslate.setZ(value); updateGL(); }
+   void setZoom(double value)   { if(value < 0.0) mTranslate.setZ(value); updateGL(); }
    void setPan(QVector3D value) { mTranslate = value;     updateGL(); }
    void setShowAzimuthElevation(bool value) { mShowAzimuthElevation = value; }
    void setAzimuth(double value)   { mRotation.setZ(-value); }
@@ -280,13 +288,13 @@ class QPlot3D: public QGLWidget {
    void setAdjustPlaneView(bool value) { mXAxis.setAdjustPlaneView(value);mYAxis.setAdjustPlaneView(value), mZAxis.setAdjustPlaneView(value);}
    void showContextMenu(const QPoint&);
    void toggleAxisEqual() {setAxisEqual(!mAxisEqual);}
+   void replot() {updateGL();}
 
  private:
    double roll()  const { return mRotation.x();  }
    double pitch() const { return mRotation.y();  }
    double yaw()   const { return mRotation.z();  }
    void   drawLegend();
-   void   drawTextBox(int x, int y, QString string);
    void   enable2D();
    void   disable2D();
    void   draw3DLine(QVector3D from, QVector3D to, double lineWidth, QColor color);
@@ -307,6 +315,13 @@ class QPlot3D: public QGLWidget {
   void mouseMoveEvent(QMouseEvent* event);
   void mouseDoubleClickEvent(QMouseEvent* event);
   void wheelEvent(QWheelEvent* event);
+  QRect textSize(QString) const;
+  QVector3D toScreenCoordinates(const QVector3D& worldCoord) const ;
+  QVector3D toScreenCoordinates(double worldX, double worldY, double worldZ) const ;
+  void      renderTextAtWorldCoordinates(const QVector3D& vec, QString string, QFont font = QFont("Helvetica"));
+  void      renderTextAtScreenCoordinates(int x, int y, QString string, QFont font = QFont("Helvetica"));
+  QVector3D cameraPositionInWorldCoordinates() const;
+  void   drawTextBox(int x, int y, QString string, QFont font = QFont("Helvetica"));
 
  private:
    QList<QCurve3D*> mCurves;
@@ -319,7 +334,7 @@ class QPlot3D: public QGLWidget {
 
    bool mShowAzimuthElevation, mShowLegend, mAxisEqual;
    QAxis mXAxis, mYAxis, mZAxis;
-
+   QFont mLegendFont;
 };
 
 #endif
