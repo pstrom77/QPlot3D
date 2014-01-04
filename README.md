@@ -1,4 +1,4 @@
-# QPLot3D
+# QPlot3D
 
 QPlot3D is intended to be a lightweight 3D plot library for QT based on OpenGL.
 
