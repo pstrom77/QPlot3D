@@ -14,7 +14,7 @@ QPlot3D is intended to be a lightweight 3D plot library for QT based on OpenGL.
   plot.addCurve(&curve);
   
   plot.show();
-``    
+```    
 
 ## Screenshot
-![Screenshot](https://github.com//pstrom77/QPlot3D/screenshot.png "Screenshot")
+![Screenshot](https://raw.github.com/pstrom77/QPlot3D/master/screenshot.png "Screenshot")
